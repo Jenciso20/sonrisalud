@@ -1,0 +1,197 @@
+.modulo {
+  max-width: 1100px;
+  margin: 32px auto;
+  padding: 0 16px 48px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.modulo__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modulo__header h1 {
+  margin: 0;
+  font-size: 28px;
+  color: #0a3d62;
+}
+
+.modulo__header p {
+  margin: 0;
+  color: #636e72;
+}
+
+.modulo__volver {
+  align-self: flex-start;
+  background-color: #0984e3;
+  padding: 8px 14px;
+  border-radius: 10px;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+.modulo__volver:hover {
+  background-color: #0a66b7;
+}
+
+.modulo__seccion {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 18px rgba(10, 61, 98, 0.08);
+}
+
+.modulo__seccion h2 {
+  margin: 0 0 10px;
+  color: #0a3d62;
+}
+
+.seccion__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2d3436;
+}
+
+.campo select,
+.campo input[type='date'],
+.campo input[type='text'],
+.campo textarea {
+  border: 1px solid #dfe6e9;
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 14px;
+  color: #2d3436;
+  background-color: #f9fbff;
+}
+
+.campo--btn {
+  align-self: end;
+}
+
+.campo--textarea {
+  min-height: 80px;
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slots__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.slots__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.slot {
+  border: 1px solid rgba(9, 132, 227, 0.4);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: rgba(9, 132, 227, 0.08);
+  color: #0a66b7;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.slot--sel {
+  background: linear-gradient(135deg, #0984e3, #0a66b7);
+  color: #fff;
+  border-color: transparent;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, #0984e3, #0a66b7);
+  color: #fff;
+}
+
+.btn--accent {
+  background: linear-gradient(135deg, #55efc4, #00b894);
+  color: #063c35;
+}
+
+.btn--danger {
+  background-color: #d63031;
+  color: #fff;
+}
+
+.estado {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.estado--error { background: #f8d7da; color: #c0392b; }
+.estado--ok { background: #d4edda; color: #1e8449; }
+
+.tabla {
+  display: grid;
+  gap: 8px;
+}
+
+.tabla__head, .tabla__row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 0.8fr 1.2fr 0.8fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.tabla__head {
+  font-weight: 700;
+  color: #0a3d62;
+}
+
+.tabla--pacientes .tabla__head, .tabla--pacientes .tabla__row {
+  grid-template-columns: 1.2fr 1fr 0.8fr 0.8fr;
+}
+
+.tabla--usuarios .tabla__head, .tabla--usuarios .tabla__row {
+  grid-template-columns: 1.2fr 1fr 0.8fr 0.8fr;
+}

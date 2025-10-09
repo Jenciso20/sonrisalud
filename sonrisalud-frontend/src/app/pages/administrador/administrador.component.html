@@ -1,0 +1,195 @@
+<div class="modulo">
+  <header class="modulo__header">
+    <h1>Administrador</h1>
+    <p>Crear, listar, editar y cancelar citas. Ver horarios disponibles.</p>
+    <a routerLink="/menu" class="modulo__volver">Volver al menu</a>
+  </header>
+
+  <section class="modulo__seccion">
+    <h2>Nueva cita</h2>
+    <div class="grid">
+      <div class="campo">
+        <label>Paciente</label>
+        <select [(ngModel)]="pacienteId" name="paciente">
+          <option [ngValue]="null">Selecciona paciente</option>
+          <option *ngFor="let p of pacientes" [ngValue]="p.id">{{ p.nombre }} - {{ p.correo }}</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label>Odontologo</label>
+        <select [(ngModel)]="odontologoId" name="odontologo" (change)="limpiarDisponibilidad()">
+          <option [ngValue]="null">Selecciona odontologo</option>
+          <option *ngFor="let o of odontologos" [ngValue]="o.id">{{ o.nombre }} - {{ o.especialidad }}</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label>Fecha</label>
+        <input type="date" [(ngModel)]="fecha" name="fecha" (change)="limpiarDisponibilidad()" />
+      </div>
+      <div class="campo campo--btn">
+        <button class="btn btn--primary" (click)="verDisponibilidad()" [disabled]="buscando || !odontologoId || !fecha">
+          {{ buscando ? 'Buscando...' : 'Ver disponibilidad' }}
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="slots.length" class="slots">
+      <div class="slots__header">
+        <h3>Horarios</h3>
+        <span>Duracion: {{ duracion }} min</span>
+      </div>
+      <div class="slots__grid">
+        <button type="button" class="slot" *ngFor="let s of slots" (click)="seleccionarSlot(s)" [class.slot--sel]="slotSel?.inicio === s.inicio">
+          {{ s.etiqueta }}
+        </button>
+      </div>
+    </div>
+
+    <textarea class="campo campo--textarea" [(ngModel)]="motivo" name="motivo" placeholder="Motivo de la consulta (opcional)"></textarea>
+
+    <div class="acciones">
+      <button class="btn btn--accent" (click)="crearCita()" [disabled]="creando || !slotSel || !pacienteId || !odontologoId">
+        {{ creando ? 'Creando...' : 'Crear cita' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="modulo__seccion">
+    <h2>Listado de citas</h2>
+    <div class="grid filtros">
+      <select [(ngModel)]="filtroPacienteId" name="f_paciente">
+        <option [ngValue]="null">Todos los pacientes</option>
+        <option *ngFor="let p of pacientes" [ngValue]="p.id">{{ p.nombre }}</option>
+      </select>
+      <select [(ngModel)]="filtroOdontologoId" name="f_odontologo">
+        <option [ngValue]="null">Todos los odontologos</option>
+        <option *ngFor="let o of odontologos" [ngValue]="o.id">{{ o.nombre }}</option>
+      </select>
+      <input type="date" [(ngModel)]="filtroDesde" name="f_desde" />
+      <input type="date" [(ngModel)]="filtroHasta" name="f_hasta" />
+      <select [(ngModel)]="filtroEstado" name="f_estado">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="confirmada">Confirmada</option>
+        <option value="cancelada">Cancelada</option>
+      </select>
+      <button class="btn btn--primary" (click)="buscarCitas()">Filtrar</button>
+    </div>
+
+    <div class="estado" *ngIf="loading">Cargando...</div>
+    <div class="estado estado--error" *ngIf="error">{{ error }}</div>
+    <div class="estado estado--ok" *ngIf="ok">{{ ok }}</div>
+
+    <div class="tabla" *ngIf="!loading">
+      <div class="tabla__head">
+        <div>Fecha</div>
+        <div>Paciente</div>
+        <div>Odontologo</div>
+        <div>Estado</div>
+        <div>Motivo</div>
+        <div>Acciones</div>
+      </div>
+      <div class="tabla__row" *ngFor="let c of citas">
+        <div>{{ c.inicio | date:'dd/MM HH:mm' }} - {{ c.fin | date:'HH:mm' }}</div>
+        <div>{{ c.paciente?.nombre || c.pacienteId }}</div>
+        <div>{{ c.odontologo?.nombre || c.odontologoId }}</div>
+        <div>
+          <select [(ngModel)]="c.estado" (change)="actualizar(c.id, c.estado, c.motivo)">
+            <option value="pendiente">Pendiente</option>
+            <option value="confirmada">Confirmada</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+        <div>
+          <input type="text" [(ngModel)]="c.motivo" (blur)="actualizar(c.id, c.estado, c.motivo)" />
+        </div>
+        <div>
+          <button class="btn btn--danger" (click)="cancelar(c.id)" [disabled]="c.estado === 'cancelada'">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="modulo__seccion">
+    <div class="seccion__header">
+      <h2>Pacientes</h2>
+      <button class="btn btn--primary" (click)="refrescarPacientes()">Refrescar</button>
+    </div>
+    <div class="tabla tabla--pacientes">
+      <div class="tabla__head">
+        <div>Nombre</div>
+        <div>Correo</div>
+        <div>Telefono</div>
+        <div>Acciones</div>
+      </div>
+      <div class="tabla__row" *ngFor="let p of pacientes">
+        <div><input type="text" [(ngModel)]="p.nombre" /></div>
+        <div><input type="text" [(ngModel)]="p.correo" /></div>
+        <div><input type="text" [(ngModel)]="p.telefono" /></div>
+        <div class="acciones">
+          <button class="btn btn--primary" (click)="guardarPaciente(p)">Guardar</button>
+          <button class="btn btn--danger" (click)="borrarPaciente(p)">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="modulo__seccion">
+    <div class="seccion__header">
+      <h2>Odontologos</h2>
+      <button class="btn btn--primary" (click)="refrescarOdontologos()">Refrescar</button>
+    </div>
+    <div class="tabla">
+      <div class="tabla__head">
+        <div>Nombre</div>
+        <div>Correo</div>
+        <div>Especialidad</div>
+        <div>Telefono</div>
+        <div>Duracion</div>
+        <div>Activo</div>
+        <div>Acciones</div>
+      </div>
+      <div class="tabla__row" *ngFor="let o of odontologos">
+        <div><input type="text" [(ngModel)]="o.nombre" /></div>
+        <div><input type="text" [(ngModel)]="o.correo" /></div>
+        <div><input type="text" [(ngModel)]="o.especialidad" /></div>
+        <div><input type="text" [(ngModel)]="o.telefono" /></div>
+        <div><input type="number" [(ngModel)]="o.duracionConsulta" /></div>
+        <div><input type="checkbox" [(ngModel)]="o.activo" /></div>
+        <div class="acciones">
+          <button class="btn btn--primary" (click)="guardarOdontologo(o)">Guardar</button>
+          <button class="btn btn--danger" (click)="borrarOdontologo(o)">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="modulo__seccion">
+    <div class="seccion__header">
+      <h2>Usuarios (Roles)</h2>
+      <button class="btn btn--primary" (click)="refrescarUsuarios()">Refrescar</button>
+    </div>
+    <div class="tabla tabla--usuarios">
+      <div class="tabla__head">
+        <div>Nombre</div>
+        <div>Correo</div>
+        <div>Rol</div>
+        <div>Acciones</div>
+      </div>
+      <div class="tabla__row" *ngFor="let u of usuarios">
+        <div>{{ u.nombre }}</div>
+        <div>{{ u.correo }}</div>
+        <div>
+          <select [(ngModel)]="u.rol">
+            <option value="paciente">Paciente</option>
+            <option value="odontologo">Odontologo</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="acciones">
+          <button class="btn btn--primary" (click)="guardarRol(u)">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,85 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="logo">
+      <img src="https://cdn-icons-png.flaticon.com/512/3063/3063187.png" alt="SonriSalud Logo" />
+      <h1>SonriSalud</h1>
+      <p class="subtitle">Sistema Inteligente Odontologico</p>
+    </div>
+
+    <div class="tabs">
+      <button [class.active]="isLogin" (click)="isLogin = true">Iniciar sesion</button>
+      <button [class.active]="!isLogin" (click)="isLogin = false">Crear cuenta</button>
+    </div>
+
+    <form *ngIf="isLogin" (ngSubmit)="onLogin()">
+      <div class="input-group">
+        <label>Correo</label>
+        <input type="email" [(ngModel)]="correo" name="correo" required placeholder="correo@ejemplo.com" />
+      </div>
+
+      <div class="input-group">
+        <label>Contrasena</label>
+        <input type="password" [(ngModel)]="password" name="password" required placeholder="********" />
+      </div>
+
+      <div class="forgot-container">
+        <a href="#" (click)="onForgotPassword($event)">Olvidaste tu contrasena?</a>
+      </div>
+
+      <button type="submit" class="btn-login" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Cargando...' : 'Iniciar sesion' }}
+      </button>
+    </form>
+
+    <form *ngIf="!isLogin" (ngSubmit)="onRegister()">
+      <div class="input-group">
+        <label>Nombre</label>
+        <input type="text" [(ngModel)]="nombre" name="nombre" required placeholder="Nombres" />
+      </div>
+
+      <div class="input-group">
+        <label>Apellidos</label>
+        <input type="text" [(ngModel)]="apellidos" name="apellidos" required placeholder="Apellidos" />
+      </div>
+
+      <div class="input-group">
+        <label>Correo</label>
+        <input type="email" [(ngModel)]="correo" name="correo" required placeholder="correo@ejemplo.com" />
+      </div>
+
+      <div class="input-group">
+        <label>Contrasena</label>
+        <input type="password" [(ngModel)]="password" name="password" required placeholder="********" />
+      </div>
+
+      <div class="input-group">
+        <label>Confirmar contrasena</label>
+        <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required placeholder="Repite la contrasena" />
+      </div>
+
+      <button type="submit" class="btn-login" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Cargando...' : 'Crear cuenta' }}
+      </button>
+    </form>
+
+    <p *ngIf="successMsg" class="success">{{ successMsg }}</p>
+    <p *ngIf="errorMsg" class="error">{{ errorMsg }}</p>
+  </div>
+</div>
+
+<div class="modal" *ngIf="showModal">
+  <div class="modal-content">
+    <h2>Recuperar contrasena</h2>
+    <input
+      type="email"
+      [(ngModel)]="recoverEmail"
+      placeholder="Ingresa tu correo registrado"
+      required
+    />
+    <button class="btn-login" (click)="sendRecovery()" [disabled]="isRecovering">
+      {{ isRecovering ? 'Enviando...' : 'Enviar correo' }}
+    </button>
+    <p *ngIf="recoverMessage" class="info">{{ recoverMessage }}</p>
+    <button class="close" (click)="closeModal()">Cerrar</button>
+  </div>
+</div>

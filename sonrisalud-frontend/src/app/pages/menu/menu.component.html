@@ -1,0 +1,45 @@
+<div class="menu">
+  <header class="menu__top">
+    <div class="menu__logo">Sonri<span>Salud</span></div>
+    <a routerLink="/pacientes" class="menu__top-link">Ir a mis citas</a>
+  </header>
+
+  <section class="menu__hero">
+    <div>
+      <h1>Gestion inteligente para pacientes, odontologos y administradores</h1>
+      <p>
+        Centraliza la agenda, el historial clinico y la administracion de tu
+        clinica odontologica con un panel moderno y seguro.
+      </p>
+      <div class="menu__tags">
+        <span>Reservas dinamicas</span>
+        <span>Alertas automaticas</span>
+        <span>Reportes en tiempo real</span>
+      </div>
+    </div>
+    <div class="menu__hero-card">
+      <h2>Todo en una sola plataforma</h2>
+      <p>
+        Automatiza recordatorios, controla la disponibilidad de profesionales y
+        mantente al tanto del desempeño de la clinica con dashboards listos para
+        escalar.
+      </p>
+    </div>
+  </section>
+
+  <section class="menu__grid">
+    <article *ngFor="let seccion of secciones" class="menu-card">
+      <div class="menu-card__icon">{{ seccion.icono }}</div>
+      <h2>{{ seccion.titulo }}</h2>
+      <p class="menu-card__descripcion">{{ seccion.descripcion }}</p>
+
+      <ul class="menu-card__lista">
+        <li *ngFor="let item of seccion.items">{{ item }}</li>
+      </ul>
+
+      <a [routerLink]="seccion.ruta" class="menu-card__boton">
+        Ingresar
+      </a>
+    </article>
+  </section>
+</div>

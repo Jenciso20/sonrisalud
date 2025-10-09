@@ -1,0 +1,250 @@
+<div class="dashboard">
+  <header class="dashboard__header">
+    <div>
+      <h1>Mis citas</h1>
+      <p>Reserva, consulta tu historial y mantente al dia con tus atenciones.</p>
+    </div>
+    <div class="dashboard__actions">
+      <a routerLink="/menu" class="btn btn--light">Menu principal</a>
+      <button class="btn btn--secondary" (click)="logout()">
+        Cerrar sesion
+      </button>
+    </div>
+  </header>
+
+  <section class="reserva">
+    <div class="reserva__encabezado">
+      <h2>Reserva una nueva cita</h2>
+      <p>Selecciona especialidad, odontologo, fecha y horario disponible.</p>
+    </div>
+
+    <div class="reserva__grid">
+      <div class="campo">
+        <label>Especialidad</label>
+        <select
+          [(ngModel)]="selectedEspecialidad"
+          name="especialidad"
+          (change)="onSeleccionarEspecialidad()"
+        >
+          <option value="">Todas las especialidades</option>
+          <option *ngFor="let especialidad of especialidades" [value]="especialidad">
+            {{ especialidad }}
+          </option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label>Odontologo</label>
+        <select
+          [(ngModel)]="selectedOdontologoId"
+          name="odontologo"
+          (change)="onSeleccionarOdontologo()"
+        >
+          <option [ngValue]="null">Selecciona un odontologo</option>
+          <option
+            *ngFor="let odontologo of odontologosFiltrados"
+            [ngValue]="odontologo.id"
+          >
+            {{ obtenerEtiquetaOdontologo(odontologo) }}
+          </option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label>Fecha</label>
+        <input
+          type="date"
+          [(ngModel)]="selectedFecha"
+          name="fecha"
+          (change)="limpiarDisponibilidad()"
+        />
+      </div>
+
+      <div class="campo campo--boton">
+        <button
+          type="button"
+          class="btn btn--primary"
+          (click)="onBuscarSlots()"
+          [disabled]="buscandoSlots || !selectedOdontologoId || !selectedFecha"
+        >
+          {{ buscandoSlots ? 'Buscando...' : 'Ver horarios' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="slots" *ngIf="slotsDisponibles.length">
+      <header class="slots__header">
+        <h3>Horarios disponibles</h3>
+        <span>Duracion aproximada: {{ duracionSlot || 30 }} minutos</span>
+      </header>
+      <div class="slots__grid">
+        <button
+          type="button"
+          class="slot"
+          *ngFor="let slot of slotsDisponibles"
+          (click)="onSeleccionarSlot(slot)"
+          [class.slot--seleccionado]="slotSeleccionado?.inicio === slot.inicio"
+        >
+          {{ slot.etiqueta }}
+        </button>
+      </div>
+    </div>
+
+    <textarea
+      class="campo campo--textarea"
+      [(ngModel)]="motivo"
+      name="motivo"
+      placeholder="Describe brevemente el motivo de tu consulta (opcional)"
+    ></textarea>
+
+    <div class="reserva__accion">
+      <button
+        type="button"
+        class="btn btn--accent"
+        (click)="onReservar()"
+        [disabled]="creandoCita || !slotSeleccionado"
+      >
+        {{ creandoCita ? 'Reservando...' : 'Confirmar cita' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="features">
+    <article class="feature-card">
+      <h2>Historial organizado</h2>
+      <p>Revisa citas futuras y pasadas con estado actualizado en tiempo real.</p>
+    </article>
+    <article class="feature-card">
+      <h2>Seguimiento personalizado</h2>
+      <p>Guarda motivos y recibe notificaciones automaticas antes de cada cita.</p>
+    </article>
+    <article class="feature-card">
+      <h2>Soporte integrado</h2>
+      <p>Gestiona cancelaciones, reagendamientos y mensajes desde un solo lugar.</p>
+    </article>
+  </section>
+
+  <section *ngIf="loading" class="state state--info">
+    Cargando citas...
+  </section>
+
+  <section *ngIf="errorMsg" class="state state--error">
+    {{ errorMsg }}
+  </section>
+
+  <section *ngIf="successMsg" class="state state--success">
+    {{ successMsg }}
+  </section>
+
+  <section class="citas" *ngIf="!loading">
+    <div class="citas__bloque">
+      <header class="citas__header">
+        <h2>Citas proximas</h2>
+        <span>{{ citasProximas.length }} agendadas</span>
+      </header>
+
+      <div *ngIf="citasProximas.length === 0" class="empty empty--inline">
+        No tienes citas proximas. Agenda una nueva para comenzar.
+      </div>
+
+      <div class="citas-grid" *ngIf="citasProximas.length > 0">
+        <article *ngFor="let cita of citasProximas" class="cita-card">
+          <header class="cita-card__header">
+            <h3>{{ cita.odontologo?.nombre || 'Odontologo' }}</h3>
+            <span class="estado" [ngClass]="cita.estado">
+              {{ cita.estado | titlecase }}
+            </span>
+          </header>
+
+          <p class="cita-card__fecha">
+            {{ cita.inicio | date: 'EEEE d \'de\' MMMM, HH:mm' }} -
+            {{ cita.fin | date: 'HH:mm' }}
+          </p>
+
+          <p class="cita-card__detalle">
+            Especialidad: {{ cita.odontologo?.especialidad || 'No especificada' }}
+          </p>
+
+          <p class="cita-card__detalle" *ngIf="cita.motivo">
+            Motivo: {{ cita.motivo }}
+          </p>
+
+          <footer class="cita-card__acciones">
+            <button
+              class="btn btn--danger"
+              type="button"
+              *ngIf="cita.estado !== 'cancelada'"
+              [disabled]="cancelando.has(cita.id)"
+              (click)="onCancelar(cita.id)"
+            >
+              {{ cancelando.has(cita.id) ? 'Cancelando...' : 'Cancelar cita' }}
+            </button>
+            <button
+              class="btn btn--primary"
+              type="button"
+              *ngIf="cita.estado !== 'cancelada'"
+              (click)="abrirReprogramar(cita)"
+            >
+              Reprogramar
+            </button>
+          </footer>
+
+          <div class="reprogramar" *ngIf="reprogramandoId === cita.id">
+            <div class="reprogramar__fila">
+              <input type="date" [(ngModel)]="reFecha" />
+              <button class="btn btn--primary" type="button" (click)="buscarReSlots(cita)" [disabled]="reBuscando">
+                {{ reBuscando ? 'Buscando...' : 'Ver horarios' }}
+              </button>
+              <button class="btn btn--light" type="button" (click)="cerrarReprogramar()">Cerrar</button>
+            </div>
+            <div class="slots__grid" *ngIf="reSlots.length">
+              <button type="button" class="slot" *ngFor="let s of reSlots" (click)="seleccionarReSlot(s)" [class.slot--seleccionado]="reSlotSel?.inicio === s.inicio">
+                {{ s.etiqueta }}
+              </button>
+            </div>
+            <div class="reprogramar__accion">
+              <button class="btn btn--accent" type="button" (click)="confirmarReprogramar(cita)" [disabled]="reGuardando || !reSlotSel">
+                {{ reGuardando ? 'Guardando...' : 'Confirmar reprogramacion' }}
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div class="citas__bloque">
+      <header class="citas__header">
+        <h2>Historial de citas</h2>
+        <span>{{ citasPasadas.length }} registradas</span>
+      </header>
+
+      <div *ngIf="citasPasadas.length === 0" class="empty empty--inline">
+        Aun no tienes atenciones previas registradas.
+      </div>
+
+      <div class="citas-grid" *ngIf="citasPasadas.length > 0">
+        <article *ngFor="let cita of citasPasadas" class="cita-card cita-card--historico">
+          <header class="cita-card__header">
+            <h3>{{ cita.odontologo?.nombre || 'Odontologo' }}</h3>
+            <span class="estado" [ngClass]="cita.estado">
+              {{ cita.estado | titlecase }}
+            </span>
+          </header>
+
+          <p class="cita-card__fecha">
+            {{ cita.inicio | date: 'EEEE d \'de\' MMMM, HH:mm' }} -
+            {{ cita.fin | date: 'HH:mm' }}
+          </p>
+
+          <p class="cita-card__detalle">
+            Especialidad: {{ cita.odontologo?.especialidad || 'No especificada' }}
+          </p>
+
+          <p class="cita-card__detalle" *ngIf="cita.motivo">
+            Motivo: {{ cita.motivo }}
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+</div>

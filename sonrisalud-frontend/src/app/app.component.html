@@ -1,0 +1,49 @@
+<div class="layout" *ngIf="authService.isAuthenticated(); else onlyContent">
+  <aside class="sidebar" [class.sidebar--collapsed]="sidebarCollapsed">
+    <div class="sidebar__brand" [class.sidebar__brand--center]="sidebarCollapsed">
+      <a routerLink="/menu" class="brand">Sonri<span>Salud</span></a>
+    </div>
+    <nav class="sidebar__nav">
+      <a routerLink="/menu" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="icon">🏠</span>
+        <span class="label" *ngIf="!sidebarCollapsed">Inicio</span>
+      </a>
+      <a routerLink="/pacientes" routerLinkActive="active">
+        <span class="icon">👤</span>
+        <span class="label" *ngIf="!sidebarCollapsed">Paciente</span>
+      </a>
+      <a *ngIf="authService.isOdontologo() || authService.isAdmin()" routerLink="/odontologos" routerLinkActive="active">
+        <span class="icon">🦷</span>
+        <span class="label" *ngIf="!sidebarCollapsed">Odontologo</span>
+      </a>
+      <a *ngIf="authService.isAdmin()" routerLink="/administrador" routerLinkActive="active">
+        <span class="icon">⚙️</span>
+        <span class="label" *ngIf="!sidebarCollapsed">Administrador</span>
+      </a>
+    </nav>
+    <div class="sidebar__footer">
+      <button class="btn btn--light" (click)="logout()" title="Cerrar sesion">
+        <span class="icon">⎋</span>
+        <span class="label" *ngIf="!sidebarCollapsed">Salir</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <button class="icon-btn" (click)="toggleSidebar()" title="Mostrar/ocultar menu">
+        ☰
+      </button>
+      <h1 class="topbar__title">SonriSalud</h1>
+    </header>
+    <section class="page">
+      <router-outlet />
+    </section>
+  </main>
+</div>
+
+<ng-template #onlyContent>
+  <router-outlet />
+  <!-- Cuando no esta autenticado, solo se muestra el contenido (login/reset) -->
+  <button class="floating-toggle" (click)="toggleSidebar()" *ngIf="false">☰</button>
+</ng-template>

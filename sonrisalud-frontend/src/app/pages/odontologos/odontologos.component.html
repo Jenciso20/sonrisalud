@@ -1,0 +1,28 @@
+<div class="modulo">
+  <header class="modulo__header">
+    <h1>Modulo de Odontologo</h1>
+    <p>Administra tu agenda y el seguimiento clinico de pacientes.</p>
+    <a routerLink="/menu" class="modulo__volver">Volver al menu</a>
+  </header>
+
+  <section class="modulo__seccion">
+    <h2>Agenda de citas</h2>
+    <ul>
+      <li *ngFor="let item of agenda">{{ item }}</li>
+    </ul>
+  </section>
+
+  <section class="modulo__seccion">
+    <h2>Gestion de pacientes atendidos</h2>
+    <ul>
+      <li *ngFor="let item of pacientes">{{ item }}</li>
+    </ul>
+  </section>
+
+  <section class="modulo__seccion">
+    <h2>Disponibilidad de horario</h2>
+    <ul>
+      <li *ngFor="let item of disponibilidad">{{ item }}</li>
+    </ul>
+  </section>
+</div>

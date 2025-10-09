@@ -1,0 +1,225 @@
+.menu {
+  min-height: 100vh;
+  padding: 48px 24px 64px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f6f9ff 0%, #ecf3ff 45%, #ffffff 100%);
+  color: #1e272e;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.menu__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.menu__logo {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0a3d62;
+}
+
+.menu__logo span {
+  color: #0984e3;
+}
+
+.menu__top-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background-color: #ffffff;
+  border: 1px solid rgba(9, 132, 227, 0.3);
+  color: #0984e3;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.menu__top-link:hover {
+  background-color: rgba(9, 132, 227, 0.08);
+  transform: translateY(-1px);
+}
+
+.menu__hero {
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 32px;
+  align-items: center;
+}
+
+.menu__hero h1 {
+  margin: 0 0 16px;
+  font-size: 38px;
+  line-height: 1.18;
+  color: #0a3d62;
+}
+
+.menu__hero p {
+  margin: 0 0 18px;
+  color: #4b5d6b;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.menu__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.menu__tags span {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(9, 132, 227, 0.1);
+  color: #0a66b7;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.menu__hero-card {
+  background: linear-gradient(135deg, rgba(9, 132, 227, 0.12), rgba(255, 255, 255, 0.9));
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 18px 40px rgba(10, 61, 98, 0.08);
+  border: 1px solid rgba(9, 132, 227, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+.menu__hero-card h2 {
+  margin: 0 0 12px;
+  color: #0a3d62;
+  font-size: 22px;
+}
+
+.menu__hero-card p {
+  margin: 0;
+  color: #2d3436;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.menu__grid {
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 28px;
+}
+
+.menu-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 18px 40px rgba(10, 61, 98, 0.08);
+  border: 1px solid rgba(9, 132, 227, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 26px 50px rgba(10, 61, 98, 0.12);
+}
+
+.menu-card__icon {
+  font-size: 18px;
+  font-weight: 700;
+  width: 70px;
+  height: 70px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0984e3, #74b9ff);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 1px;
+}
+
+.menu-card h2 {
+  margin: 0;
+  color: #0a3d62;
+  font-size: 24px;
+}
+
+.menu-card__descripcion {
+  margin: 0;
+  color: #4b5d6b;
+  font-size: 16px;
+}
+
+.menu-card__lista {
+  padding-left: 18px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #596772;
+  font-size: 14px;
+}
+
+.menu-card__boton {
+  margin-top: auto;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0984e3, #0a66b7);
+  color: #ffffff;
+  text-decoration: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-card__boton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(9, 132, 227, 0.3);
+}
+
+@media (max-width: 768px) {
+  .menu {
+    padding: 32px 16px 48px;
+  }
+
+  .menu__hero h1 {
+    font-size: 30px;
+  }
+
+  .menu__top {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .menu__top-link {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu__hero-card {
+    padding: 22px;
+  }
+
+  .menu-card {
+    padding: 22px;
+  }
+
+  .menu-card h2 {
+    font-size: 20px;
+  }
+}
