@@ -1,0 +1,59 @@
+<div class="signup-wrapper">
+  <div class="signup-card">
+    <h1>Crear cuenta</h1>
+
+    <form (ngSubmit)="onSubmit()">
+      <div class="grid">
+        <div class="field">
+          <label>Nombres</label>
+          <input type="text" [(ngModel)]="nombre" name="nombre" required />
+        </div>
+        <div class="field">
+          <label>Apellidos</label>
+          <input type="text" [(ngModel)]="apellidos" name="apellidos" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Correo institucional (&#64;unajma.edu.pe)</label>
+        <input type="email" [(ngModel)]="correo" name="correo" required />
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label>DNI</label>
+          <input type="text" [(ngModel)]="dni" name="dni" />
+        </div>
+        <div class="field">
+          <label>Codigo universitario</label>
+          <input type="text" [(ngModel)]="codigoUniversitario" name="codigoUniversitario" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Telefono</label>
+        <input type="text" [(ngModel)]="telefono" name="telefono" />
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label>Contrasena</label>
+          <input type="password" [(ngModel)]="password" name="password" required />
+        </div>
+        <div class="field">
+          <label>Confirmar contrasena</label>
+          <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required />
+        </div>
+      </div>
+
+      <button class="btn" type="submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Creando...' : 'Crear cuenta' }}
+      </button>
+    </form>
+
+    <p class="error" *ngIf="errorMsg">{{ errorMsg }}</p>
+    <p class="success" *ngIf="successMsg">{{ successMsg }}</p>
+
+    <a routerLink="/">Volver a iniciar sesión</a>
+  </div>
+</div>

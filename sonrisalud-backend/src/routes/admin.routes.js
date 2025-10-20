@@ -8,6 +8,7 @@ import {
   eliminarOdontologo,
   listarUsuarios,
   actualizarRolUsuario,
+  reportesCitas,
 } from "../controllers/admin.controller.js";
 import {
   adminListarCitas,
@@ -43,5 +44,6 @@ router.delete("/odontologos/:id", eliminarOdontologo);
 // Usuarios (roles)
 router.get("/usuarios", listarUsuarios);
 router.patch("/usuarios/:id/rol", actualizarRolUsuario);
+router.get("/reportes/citas", reportesCitas);
 
 export default router;

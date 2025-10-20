@@ -12,13 +12,13 @@
     </div>
   </header>
 
-  <section class="reserva">
+  <section class="reserva card card--glass">
     <div class="reserva__encabezado">
       <h2>Reserva una nueva cita</h2>
       <p>Selecciona especialidad, odontologo, fecha y horario disponible.</p>
     </div>
 
-    <div class="reserva__grid">
+    <div class="reserva__grid grid grid--auto">
       <div class="campo">
         <label>Especialidad</label>
         <select
@@ -151,9 +151,12 @@
         <article *ngFor="let cita of citasProximas" class="cita-card">
           <header class="cita-card__header">
             <h3>{{ cita.odontologo?.nombre || 'Odontologo' }}</h3>
-            <span class="estado" [ngClass]="cita.estado">
-              {{ cita.estado | titlecase }}
-            </span>
+            <span class="badge" [ngClass]="{
+              'badge--pendiente': cita.estado==='pendiente',
+              'badge--confirmada': cita.estado==='confirmada',
+              'badge--cancelada': cita.estado==='cancelada',
+              'badge--atendida': cita.estado==='atendida'
+            }">{{ cita.estado | titlecase }}</span>
           </header>
 
           <p class="cita-card__fecha">

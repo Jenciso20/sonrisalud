@@ -1,28 +1,44 @@
 <div class="modulo">
   <header class="modulo__header">
-    <h1>Modulo de Odontologo</h1>
-    <p>Administra tu agenda y el seguimiento clinico de pacientes.</p>
+    <h1>Agenda del Odontologo</h1>
     <a routerLink="/menu" class="modulo__volver">Volver al menu</a>
   </header>
 
   <section class="modulo__seccion">
-    <h2>Agenda de citas</h2>
-    <ul>
-      <li *ngFor="let item of agenda">{{ item }}</li>
-    </ul>
-  </section>
+    <div class="filtros">
+      <label>Fecha</label>
+      <input type="date" [(ngModel)]="fecha" />
+      <button class="btn btn--primary" (click)="buscar()" [disabled]="loading">{{ loading ? 'Cargando...' : 'Buscar' }}</button>
+    </div>
 
-  <section class="modulo__seccion">
-    <h2>Gestion de pacientes atendidos</h2>
-    <ul>
-      <li *ngFor="let item of pacientes">{{ item }}</li>
-    </ul>
-  </section>
+    <div class="estado" *ngIf="error">{{ error }}</div>
 
-  <section class="modulo__seccion">
-    <h2>Disponibilidad de horario</h2>
-    <ul>
-      <li *ngFor="let item of disponibilidad">{{ item }}</li>
-    </ul>
+    <div class="tabla">
+      <div class="tabla__head">
+        <div>Hora</div>
+        <div>Paciente</div>
+        <div>Estado</div>
+        <div>Acciones</div>
+      </div>
+      <div class="tabla__row" *ngFor="let c of citas">
+        <div>{{ c.inicio | date:'HH:mm' }} - {{ c.fin | date:'HH:mm' }}</div>
+        <div>#{{ c.pacienteId }}</div>
+        <div>{{ c.estado }}</div>
+        <div>
+          <button class="btn btn--primary" (click)="abrirAtencion(c)" *ngIf="c.estado !== 'atendida'">Atender</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="atencion" *ngIf="sel">
+      <h3>Atencion clinica</h3>
+      <textarea [(ngModel)]="diagnostico" placeholder="Diagnostico"></textarea>
+      <textarea [(ngModel)]="tratamiento" placeholder="Tratamiento"></textarea>
+      <textarea [(ngModel)]="observaciones" placeholder="Observaciones"></textarea>
+      <div class="acciones">
+        <button class="btn btn--accent" (click)="atender()" [disabled]="guardando">{{ guardando ? 'Guardando...' : 'Guardar' }}</button>
+        <button class="btn btn--light" (click)="cerrarAtencion()">Cerrar</button>
+      </div>
+    </div>
   </section>
 </div>

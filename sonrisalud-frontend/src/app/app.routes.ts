@@ -4,12 +4,14 @@ import { ResetPasswordComponent } from './pages/reset-password/reset-password.co
 import { MenuComponent } from './pages/menu/menu.component';
 import { PacientesComponent } from './pages/pacientes/pacientes.component';
 import { OdontologosComponent } from './pages/odontologos/odontologos.component';
+import { SignupComponent } from './pages/signup/signup.component';
 import { AdministradorComponent } from './pages/administrador/administrador.component';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   { path: '', component: LoginComponent },
+  { path: 'signup', component: SignupComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'menu', component: MenuComponent, canActivate: [authGuard] },
   { path: 'pacientes', component: PacientesComponent, canActivate: [authGuard] },

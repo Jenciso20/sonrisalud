@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import odontologosRoutes from "./routes/odontologos.routes.js";
 import citasRoutes from "./routes/citas.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import { runMigrations } from "./migrations/runMigrations.js";
 import "./models/index.js";
 import { Usuario } from "./models/Usuario.js";
 import bcrypt from "bcryptjs";
@@ -29,8 +30,10 @@ sequelize
   .sync(syncOptions)
   .then(() => {
     console.log("Base de datos sincronizada correctamente.");
-    // Bootstrap primer admin si no existe
+    // Aplicar migraciones ligeras (ADD COLUMN IF NOT EXISTS)
     (async () => {
+      await runMigrations();
+      // Bootstrap primer admin si no existe
       try {
         const admins = await Usuario.count({ where: { rol: "admin" } });
         if (admins === 0) {

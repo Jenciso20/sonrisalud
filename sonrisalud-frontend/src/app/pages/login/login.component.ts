@@ -1,22 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {
+  // Si quieres ocultar el registro y mostrar solo login, deja esto en false
+  allowRegister = false;
   isLogin = true;
 
   nombre = '';
   apellidos = '';
   correo = '';
+  telefono = '';
+  dni = '';
+  codigoUniversitario = '';
   password = '';
   confirmPassword = '';
 
@@ -38,6 +43,9 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu';
+    // Forzar vista de inicio de sesion solamente
+    this.allowRegister = false;
+    this.isLogin = true;
 
     if (this.authService.isAuthenticated()) {
       this.router.navigate([this.returnUrl]);
@@ -54,7 +62,14 @@ export class LoginComponent implements OnInit {
         this.successMsg = res.mensaje || 'Inicio de sesion exitoso.';
         if (res.token) {
           this.authService.setToken(res.token);
-          this.router.navigate([this.returnUrl]);
+          // Redirigir segun rol
+          const role = this.authService.getRole();
+          const dest = role === 'admin'
+            ? '/administrador'
+            : role === 'odontologo'
+            ? '/odontologos'
+            : this.returnUrl || '/menu';
+          this.router.navigate([dest]);
         }
       },
       error: (err) => {
@@ -69,6 +84,11 @@ export class LoginComponent implements OnInit {
   onRegister() {
     this.resetAlerts();
 
+    if (!this.correo.toLowerCase().endsWith('@unajma.edu.pe')) {
+      this.errorMsg = 'Usa tu correo institucional @unajma.edu.pe';
+      return;
+    }
+
     if (this.password !== this.confirmPassword) {
       this.errorMsg = 'Las contrasenas no coinciden.';
       return;
@@ -78,7 +98,10 @@ export class LoginComponent implements OnInit {
     const payload = {
       nombre: (this.nombre + ' ' + this.apellidos).trim(),
       correo: this.correo,
-      password: this.password
+      password: this.password,
+      telefono: this.telefono || undefined,
+      dni: this.dni || undefined,
+      codigoUniversitario: this.codigoUniversitario || undefined
     };
 
     this.authService.register(payload).subscribe({
@@ -100,6 +123,9 @@ export class LoginComponent implements OnInit {
     this.nombre = '';
     this.apellidos = '';
     this.correo = '';
+    this.telefono = '';
+    this.dni = '';
+    this.codigoUniversitario = '';
     this.password = '';
     this.confirmPassword = '';
   }

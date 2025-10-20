@@ -1,0 +1,8 @@
+.signup-wrapper { display: flex; justify-content: center; padding: 24px; }
+.signup-card { width: 100%; max-width: 560px; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(10,61,98,.08); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field input { border: 1px solid #dfe6e9; border-radius: 8px; padding: 10px; }
+.btn { border: none; background: linear-gradient(135deg, #0984e3, #0a66b7); color: #fff; border-radius: 10px; padding: 10px 16px; font-weight: 700; cursor: pointer; }
+.error { color: #c0392b; }
+.success { color: #1e8449; }

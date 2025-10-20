@@ -42,13 +42,19 @@ export const login = async (req, res) => {
 // Registro
 export const register = async (req, res) => {
   try {
-    const { nombre, correo, password, telefono } = req.body;
+    const { nombre, apellidos, correo, password, telefono, dni, codigoUniversitario } = req.body;
 
     if (!nombre || !correo || !password) {
       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
     }
 
-    const existeUsuario = await Usuario.findOne({ where: { correo } });
+    // Validar correo institucional
+    const correoLower = String(correo).toLowerCase().trim();
+    if (!correoLower.endsWith("@unajma.edu.pe")) {
+      return res.status(400).json({ mensaje: "Usa tu correo institucional @unajma.edu.pe" });
+    }
+
+    const existeUsuario = await Usuario.findOne({ where: { correo: correoLower } });
     if (existeUsuario) {
       return res.status(400).json({ mensaje: "El correo ya esta registrado" });
     }
@@ -57,10 +63,13 @@ export const register = async (req, res) => {
 
     const nuevoUsuario = await Usuario.create({
       nombre,
-      correo,
+      apellidos: apellidos || null,
+      correo: correoLower,
       password: hashedPassword,
       rol: "paciente",
       telefono: telefono || null,
+      dni: dni || null,
+      codigoUniversitario: codigoUniversitario || null,
     });
 
     res.json({ mensaje: "Usuario registrado correctamente", usuario: nuevoUsuario });

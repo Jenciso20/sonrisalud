@@ -14,4 +14,12 @@ export class OdontologosService {
   obtenerOdontologos(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiBase}/odontologos`);
   }
+
+  agenda(odontologoId: number, desde: string, hasta: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiBase}/odontologos/agenda`, { params: { odontologoId, desde, hasta } });
+  }
+
+  atenderCita(id: number, payload: { diagnostico?: string; tratamiento?: string; observaciones?: string }): Observable<any> {
+    return this.http.patch(`${this.apiBase}/odontologos/citas/${id}/atender`, payload);
+  }
 }

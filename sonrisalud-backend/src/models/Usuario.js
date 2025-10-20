@@ -13,10 +13,24 @@ export const Usuario = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    apellidos: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     correo: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+    },
+    dni: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: false,
+    },
+    codigoUniversitario: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "codigo_universitario",
     },
     password: {
       type: DataTypes.STRING,

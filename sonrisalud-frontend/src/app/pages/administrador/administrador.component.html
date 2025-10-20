@@ -120,12 +120,16 @@
         <div>Nombre</div>
         <div>Correo</div>
         <div>Telefono</div>
+        <div>DNI</div>
+        <div>Codigo Univ.</div>
         <div>Acciones</div>
       </div>
       <div class="tabla__row" *ngFor="let p of pacientes">
         <div><input type="text" [(ngModel)]="p.nombre" /></div>
         <div><input type="text" [(ngModel)]="p.correo" /></div>
         <div><input type="text" [(ngModel)]="p.telefono" /></div>
+        <div>{{ p.dni || '-' }}</div>
+        <div>{{ p.codigoUniversitario || '-' }}</div>
         <div class="acciones">
           <button class="btn btn--primary" (click)="guardarPaciente(p)">Guardar</button>
           <button class="btn btn--danger" (click)="borrarPaciente(p)">Eliminar</button>

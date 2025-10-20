@@ -40,6 +40,23 @@ export const Cita = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+  diagnostico: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  tratamiento: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  observaciones: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  atendidaPor: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: "atendida_por",
+  },
   recordatorioEnviado: {
     type: DataTypes.BOOLEAN,
     allowNull: false,

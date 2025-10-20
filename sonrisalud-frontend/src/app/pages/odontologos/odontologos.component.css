@@ -60,3 +60,11 @@
   gap: 6px;
   color: #2d3436;
 }
+
+.filtros { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tabla { display: grid; gap: 8px; }
+.tabla__head, .tabla__row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; align-items: center; }
+.estado { margin: 8px 0; color: #c0392b; }
+.atencion { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.atencion textarea { min-height: 60px; padding: 8px; border: 1px solid #dfe6e9; border-radius: 8px; }
+.acciones { display: flex; gap: 8px; }

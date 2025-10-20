@@ -8,7 +8,7 @@ export const listarPacientes = async (req, res) => {
   try {
     const pacientes = await Usuario.findAll({
       where: { rol: "paciente" },
-      attributes: ["id", "nombre", "correo", "telefono"],
+      attributes: ["id", "nombre", "correo", "telefono", "dni", "codigoUniversitario"],
       order: [["nombre", "ASC"]],
     });
     res.json(pacientes);
@@ -141,5 +141,25 @@ export const actualizarRolUsuario = async (req, res) => {
   } catch (error) {
     console.error("Admin actualizar rol:", error);
     res.status(500).json({ mensaje: "Error al actualizar rol" });
+  }
+};
+
+export const reportesCitas = async (req, res) => {
+  const { desde, hasta } = req.query;
+  try {
+    const where = {};
+    if (desde || hasta) {
+      where.inicio = {};
+      if (desde) where.inicio[Op.gte] = new Date(desde);
+      if (hasta) where.inicio[Op.lte] = new Date(hasta);
+    }
+    const totalPendientes = await Cita.count({ where: { ...where, estado: 'pendiente' } });
+    const totalConfirmadas = await Cita.count({ where: { ...where, estado: 'confirmada' } });
+    const totalCanceladas = await Cita.count({ where: { ...where, estado: 'cancelada' } });
+    const totalAtendidas = await Cita.count({ where: { ...where, estado: 'atendida' } });
+    res.json({ pendientes: totalPendientes, confirmadas: totalConfirmadas, canceladas: totalCanceladas, atendidas: totalAtendidas });
+  } catch (error) {
+    console.error('Admin reportes citas:', error);
+    res.status(500).json({ mensaje: 'Error al generar reportes' });
   }
 };
