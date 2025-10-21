@@ -22,4 +22,14 @@ export class OdontologosService {
   atenderCita(id: number, payload: { diagnostico?: string; tratamiento?: string; observaciones?: string }): Observable<any> {
     return this.http.patch(`${this.apiBase}/odontologos/citas/${id}/atender`, payload);
   }
+
+  // Listar pacientes accesible para odontologos
+  listarPacientes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiBase}/odontologos/pacientes`);
+  }
+
+  // Crear cita como odontologo eligiendo paciente
+  crearCitaComoOdontologo(payload: { pacienteId: number; inicio: string; motivo?: string; odontologoId?: number }): Observable<any> {
+    return this.http.post(`${this.apiBase}/odontologos/citas`, payload);
+  }
 }

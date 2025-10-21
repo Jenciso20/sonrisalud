@@ -15,6 +15,12 @@ export class CitasService {
     return this.http.get<any[]>(`${this.apiBase}/citas`);
   }
 
+  obtenerCitasPacienteRango(desde: string, hasta: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiBase}/citas`, {
+      params: { desde, hasta }
+    });
+  }
+
   cancelarCita(id: number): Observable<any> {
     return this.http.patch(`${this.apiBase}/citas/${id}/cancelar`, {});
   }

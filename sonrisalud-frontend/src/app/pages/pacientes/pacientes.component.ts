@@ -43,9 +43,6 @@ export class PacientesComponent implements OnInit {
   cancelando = new Set<number>();
 
   odontologos: any[] = [];
-  especialidades: string[] = [];
-  odontologosFiltrados: any[] = [];
-  selectedEspecialidad = '';
   selectedOdontologoId: number | null = null;
   selectedFecha = '';
   slotsDisponibles: SlotDisponible[] = [];
@@ -63,6 +60,13 @@ export class PacientesComponent implements OnInit {
   reBuscando = false;
   reGuardando = false;
 
+  // Calendario paciente
+  viewMode: 'week' | 'list' = 'week';
+  weekStart = this.getWeekStart(new Date());
+  dayStartMinutes = 8 * 60;
+  dayEndMinutes = 20 * 60;
+  pxPerMinute = 1; // 720px por dia
+
   constructor(
     private citasService: CitasService,
     private authService: AuthService,
@@ -71,22 +75,14 @@ export class PacientesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.cargarOdontologos();
-    this.cargarCitas();
-  }
+  this.cargarOdontologos();
+  this.cargarCitas();
+}
 
   private cargarOdontologos(): void {
     this.odontologosService.obtenerOdontologos().subscribe({
       next: (lista) => {
         this.odontologos = Array.isArray(lista) ? lista : [];
-        this.especialidades = Array.from(
-          new Set(
-            this.odontologos
-              .filter((o) => o.especialidad)
-              .map((o) => String(o.especialidad))
-          )
-        ).sort();
-        this.odontologosFiltrados = [...this.odontologos];
       },
       error: () => {
         this.errorMsg =
@@ -105,7 +101,7 @@ export class PacientesComponent implements OnInit {
         this.loading = false;
         this.separarCitas();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.loading = false;
         this.errorMsg =
           err?.error?.mensaje ||
@@ -118,7 +114,6 @@ export class PacientesComponent implements OnInit {
     const ahora = new Date();
     const futuras: Cita[] = [];
     const historicas: Cita[] = [];
-
     this.citas.forEach((cita) => {
       const fechaInicio = new Date(cita.inicio);
       if (fechaInicio >= ahora) {
@@ -134,19 +129,6 @@ export class PacientesComponent implements OnInit {
     this.citasPasadas = historicas.sort(
       (a, b) => new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
     );
-  }
-
-  onSeleccionarEspecialidad(): void {
-    if (!this.selectedEspecialidad) {
-      this.odontologosFiltrados = [...this.odontologos];
-    } else {
-      this.odontologosFiltrados = this.odontologos.filter(
-        (odontologo) => odontologo.especialidad === this.selectedEspecialidad
-      );
-    }
-
-    this.selectedOdontologoId = null;
-    this.limpiarDisponibilidad();
   }
 
   onSeleccionarOdontologo(): void {
@@ -179,7 +161,7 @@ export class PacientesComponent implements OnInit {
           }
           this.buscandoSlots = false;
         },
-        error: (err) => {
+        error: (err: any) => {
           this.errorMsg =
             err?.error?.mensaje || 'No se pudo obtener la disponibilidad.';
           this.slotsDisponibles = [];
@@ -217,7 +199,7 @@ export class PacientesComponent implements OnInit {
           this.limpiarDisponibilidad();
           this.cargarCitas();
         },
-        error: (err) => {
+        error: (err: any) => {
           this.errorMsg =
             err?.error?.mensaje || 'No se pudo reservar la cita. Intenta nuevamente.';
           this.creandoCita = false;
@@ -251,7 +233,7 @@ export class PacientesComponent implements OnInit {
         this.successMsg = 'La cita fue cancelada correctamente.';
         this.cargarCitas();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.errorMsg =
           err?.error?.mensaje || 'No se pudo cancelar la cita. Intenta nuevamente.';
         this.cancelando.delete(citaId);
@@ -267,10 +249,68 @@ export class PacientesComponent implements OnInit {
     this.router.navigate(['']);
   }
 
+  // Navegacion semana
+  prevWeek(): void {
+    const d = new Date(this.weekStart);
+    d.setDate(d.getDate() - 7);
+    this.weekStart = this.getWeekStart(d);
+  }
+
+  todayWeek(): void {
+    this.weekStart = this.getWeekStart(new Date());
+  }
+
+  nextWeek(): void {
+    const d = new Date(this.weekStart);
+    d.setDate(d.getDate() + 7);
+    this.weekStart = this.getWeekStart(d);
+  }
+
+  // Semana actual mostrada en el calendario (lun-dom)
+  get weekDays(): { label: string; iso: string; date: Date }[] {
+    const days: { label: string; iso: string; date: Date }[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(this.weekStart);
+      d.setDate(d.getDate() + i);
+      const iso = this.formatIsoDate(d);
+      const label = d.toLocaleDateString(undefined, {
+        weekday: 'short',
+        day: '2-digit',
+        month: '2-digit'
+      });
+      days.push({ label, iso, date: d });
+    }
+    return days;
+  }
+
+  // Eventos para un dia especifico del calendario
+  eventsForDay(iso: string): Array<{ cita: Cita; title: string; top: number; height: number }> {
+    const startMinutes = this.dayStartMinutes;
+    const endMinutes = this.dayEndMinutes;
+    const pxPerMin = this.pxPerMinute || 1;
+
+    const events = (this.citas || []).filter((c) => {
+      const d = new Date(c.inicio);
+      return this.formatIsoDate(d) === iso;
+    }).map((c) => {
+      const s = new Date(c.inicio);
+      const e = new Date(c.fin || c.inicio);
+      const sMin = s.getHours() * 60 + s.getMinutes();
+      const eMin = e.getHours() * 60 + e.getMinutes();
+      const clampedStart = Math.max(sMin, startMinutes);
+      const clampedEnd = Math.min(eMin, endMinutes);
+      const top = Math.max(0, (clampedStart - startMinutes) * pxPerMin);
+      const height = Math.max(10, (clampedEnd - clampedStart) * pxPerMin);
+      const title = c.odontologo?.nombre || 'Cita';
+      return { cita: c, title, top, height };
+    });
+
+    return events;
+  }
+
   obtenerEtiquetaOdontologo(odontologo: any): string {
     const nombre = odontologo?.nombre || 'Odontologo';
-    const especialidad = odontologo?.especialidad ? ` - ${odontologo.especialidad}` : '';
-    return `${nombre}${especialidad}`;
+    return `${nombre}`;
   }
 
   // Reprogramar
@@ -306,7 +346,7 @@ export class PacientesComponent implements OnInit {
         if (!this.reSlots.length) this.errorMsg = 'Sin horarios para ese dia.';
         this.reBuscando = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         this.errorMsg = err?.error?.mensaje || 'No se pudo obtener disponibilidad.';
         this.reBuscando = false;
       }
@@ -330,7 +370,7 @@ export class PacientesComponent implements OnInit {
         this.cargarCitas();
         this.reGuardando = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         this.errorMsg = err?.error?.mensaje || 'No se pudo reprogramar la cita.';
         this.reGuardando = false;
       }
@@ -341,4 +381,24 @@ export class PacientesComponent implements OnInit {
     this.errorMsg = '';
     this.successMsg = '';
   }
+
+  private getWeekStart(date: Date): Date {
+    const d = new Date(date);
+    const day = d.getDay(); // 0=Sun..6=Sat
+    const diff = (day + 6) % 7; // start on Monday
+    d.setDate(d.getDate() - diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  private formatIsoDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
 }
+
+
+
+

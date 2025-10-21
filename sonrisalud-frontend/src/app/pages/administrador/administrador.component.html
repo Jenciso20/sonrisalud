@@ -19,7 +19,7 @@
         <label>Odontologo</label>
         <select [(ngModel)]="odontologoId" name="odontologo" (change)="limpiarDisponibilidad()">
           <option [ngValue]="null">Selecciona odontologo</option>
-          <option *ngFor="let o of odontologos" [ngValue]="o.id">{{ o.nombre }} - {{ o.especialidad }}</option>
+          <option *ngFor="let o of odontologos" [ngValue]="o.id">{{ o.nombre }}</option>
         </select>
       </div>
       <div class="campo">
@@ -147,7 +147,6 @@
       <div class="tabla__head">
         <div>Nombre</div>
         <div>Correo</div>
-        <div>Especialidad</div>
         <div>Telefono</div>
         <div>Duracion</div>
         <div>Activo</div>
@@ -156,7 +155,6 @@
       <div class="tabla__row" *ngFor="let o of odontologos">
         <div><input type="text" [(ngModel)]="o.nombre" /></div>
         <div><input type="text" [(ngModel)]="o.correo" /></div>
-        <div><input type="text" [(ngModel)]="o.especialidad" /></div>
         <div><input type="text" [(ngModel)]="o.telefono" /></div>
         <div><input type="number" [(ngModel)]="o.duracionConsulta" /></div>
         <div><input type="checkbox" [(ngModel)]="o.activo" /></div>

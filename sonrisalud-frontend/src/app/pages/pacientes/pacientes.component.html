@@ -15,24 +15,10 @@
   <section class="reserva card card--glass">
     <div class="reserva__encabezado">
       <h2>Reserva una nueva cita</h2>
-      <p>Selecciona especialidad, odontologo, fecha y horario disponible.</p>
+      <p>Selecciona odontologo, fecha y horario disponible.</p>
     </div>
 
     <div class="reserva__grid grid grid--auto">
-      <div class="campo">
-        <label>Especialidad</label>
-        <select
-          [(ngModel)]="selectedEspecialidad"
-          name="especialidad"
-          (change)="onSeleccionarEspecialidad()"
-        >
-          <option value="">Todas las especialidades</option>
-          <option *ngFor="let especialidad of especialidades" [value]="especialidad">
-            {{ especialidad }}
-          </option>
-        </select>
-      </div>
-
       <div class="campo">
         <label>Odontologo</label>
         <select
@@ -41,10 +27,7 @@
           (change)="onSeleccionarOdontologo()"
         >
           <option [ngValue]="null">Selecciona un odontologo</option>
-          <option
-            *ngFor="let odontologo of odontologosFiltrados"
-            [ngValue]="odontologo.id"
-          >
+          <option *ngFor="let odontologo of odontologos" [ngValue]="odontologo.id">
             {{ obtenerEtiquetaOdontologo(odontologo) }}
           </option>
         </select>
@@ -109,6 +92,43 @@
     </div>
   </section>
 
+  <!-- Calendario semanal -->
+  <section class="modulo__seccion">
+    <div class="agenda-controls">
+      <div class="left">
+        <button class="btn btn--secondary" (click)="prevWeek()">◀ Semana</button>
+        <button class="btn btn--light" (click)="todayWeek()">Hoy</button>
+        <button class="btn btn--secondary" (click)="nextWeek()">Semana ▶</button>
+      </div>
+      <div class="right">
+        <label>Vista:</label>
+        <select [(ngModel)]="viewMode">
+          <option value="week">Semana</option>
+          <option value="list">Lista</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="week" *ngIf="viewMode==='week'">
+      <div class="week__header">
+        <div class="week__timecol"></div>
+        <div class="week__day" *ngFor="let d of weekDays">{{ d.label }}</div>
+      </div>
+      <div class="week__body">
+        <div class="week__timecol">
+          <div class="hour" *ngFor="let h of [].constructor(13); let i=index">{{ (8+i) }}:00</div>
+        </div>
+        <div class="week__daycol" *ngFor="let d of weekDays">
+          <div class="slot-bg" *ngFor="let h of [].constructor(12)"></div>
+          <div class="event" *ngFor="let e of eventsForDay(d.iso)" [style.top.px]="e.top" [style.height.px]="e.height">
+            <span>{{ e.cita.inicio | date:'HH:mm' }} - {{ e.cita.fin | date:'HH:mm' }}</span>
+            <strong>{{ e.title }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="features">
     <article class="feature-card">
       <h2>Historial organizado</h2>
@@ -164,9 +184,7 @@
             {{ cita.fin | date: 'HH:mm' }}
           </p>
 
-          <p class="cita-card__detalle">
-            Especialidad: {{ cita.odontologo?.especialidad || 'No especificada' }}
-          </p>
+          
 
           <p class="cita-card__detalle" *ngIf="cita.motivo">
             Motivo: {{ cita.motivo }}
@@ -239,9 +257,7 @@
             {{ cita.fin | date: 'HH:mm' }}
           </p>
 
-          <p class="cita-card__detalle">
-            Especialidad: {{ cita.odontologo?.especialidad || 'No especificada' }}
-          </p>
+          
 
           <p class="cita-card__detalle" *ngIf="cita.motivo">
             Motivo: {{ cita.motivo }}

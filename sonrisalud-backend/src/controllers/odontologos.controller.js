@@ -2,6 +2,8 @@ import { Odontologo } from "../models/Odontologo.js";
 import { HorarioOdontologo } from "../models/HorarioOdontologo.js";
 import { Cita } from "../models/Cita.js";
 import { Op } from "sequelize";
+import { Usuario } from "../models/Usuario.js";
+import { crearCita as crearCitaPaciente } from "./citas.controller.js";
 
 export const listarOdontologos = async (req, res) => {
   try {
@@ -100,5 +102,48 @@ export const atenderCita = async (req, res) => {
   } catch (error) {
     console.error("Error al atender cita:", error);
     res.status(500).json({ mensaje: "Error al actualizar cita" });
+  }
+};
+
+// Lista basica de pacientes para uso de odontologos
+export const listarPacientesParaOdontologo = async (req, res) => {
+  try {
+    const pacientes = await Usuario.findAll({
+      where: { rol: "paciente" },
+      attributes: ["id", "nombre", "correo"],
+      order: [["nombre", "ASC"]],
+    });
+    res.json(pacientes);
+  } catch (error) {
+    console.error("Error al listar pacientes para odontologo:", error);
+    res.status(500).json({ mensaje: "Error al listar pacientes" });
+  }
+};
+
+// Permite a un odontologo crear una cita indicando pacienteId
+export const crearCitaParaPaciente = async (req, res) => {
+  const usuario = req.usuario; // odontologo o admin autenticado
+  const { pacienteId, inicio, motivo, odontologoId: bodyOdId } = req.body || {};
+  try {
+    if (!pacienteId || !inicio) {
+      return res.status(400).json({ mensaje: "Paciente e inicio son requeridos" });
+    }
+    let odontologoId = null; // JS: sin anotaciones de tipo
+    if (usuario.rol === 'admin') {
+      if (!bodyOdId) return res.status(400).json({ mensaje: 'Odontologo requerido' });
+      odontologoId = bodyOdId;
+    } else {
+      // Mapear odontologo (modelo) a partir del usuario autenticado
+      const od = await Odontologo.findOne({ where: { userId: usuario.id } });
+      if (!od) return res.status(404).json({ mensaje: 'Odontologo no vinculado a usuario' });
+      odontologoId = od.id;
+    }
+    // Reutilizar las validaciones de crearCita para este paciente y este odontologo
+    req.body = { odontologoId, inicio, motivo };
+    req.usuario = { id: pacienteId };
+    return crearCitaPaciente(req, res);
+  } catch (error) {
+    console.error("Error odontologo crear cita:", error);
+    res.status(500).json({ mensaje: "Error al crear cita" });
   }
 };

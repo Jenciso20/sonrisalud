@@ -82,16 +82,20 @@ export const crearCita = async (req, res) => {
       return res.status(400).json({ mensaje: "La cita debe programarse a futuro" });
     }
 
-    const duracion = odontologo.duracionConsulta || 30;
+    const duracion = 60; // citas de 1 hora
     const finDate = new Date(inicioDate.getTime() + duracion * 60 * 1000);
 
     const diaSemana = inicioDate.getDay();
     const inicioMin = inicioDate.getHours() * 60 + inicioDate.getMinutes();
     const finMin = inicioMin + duracion;
 
-    const horarios = await HorarioOdontologo.findAll({
+    let horarios = await HorarioOdontologo.findAll({
       where: { odontologoId, diaSemana },
     });
+    // Fallback si no hay horarios configurados para ese día
+    if (!horarios.length) {
+      horarios = [{ horaInicio: "08:00", horaFin: "20:00" }];
+    }
 
     const estaEnHorario = horarios.some((horario) => {
       const horaInicio = toMinutes(horario.horaInicio);
@@ -219,12 +223,20 @@ export const obtenerDisponibilidad = async (req, res) => {
 
     const diaSemana = targetDate.getDay();
 
-    const horarios = odontologo.horarios.filter(
+    let horarios = odontologo.horarios.filter(
       (horario) => horario.diaSemana === diaSemana
     );
 
-    if (!horarios.length) {
-      return res.json({ slots: [], duracion: odontologo.duracionConsulta || 30 });
+    // Fallback: si no hay horarios configurados para ese dia, asumir jornada 08:00-20:00
+    // Esto facilita pruebas cuando aún no se cargaron horarios.
+    const usarFallback = !horarios.length;
+    if (usarFallback) {
+      horarios = [
+        {
+          horaInicio: "08:00",
+          horaFin: "20:00",
+        },
+      ];
     }
 
     const inicioDia = new Date(targetDate);
@@ -240,7 +252,7 @@ export const obtenerDisponibilidad = async (req, res) => {
       },
     });
 
-    const duracion = odontologo.duracionConsulta || 30;
+    const duracion = 60; // citas de 1 hora
     const milisegundosDuracion = duracion * 60 * 1000;
     const ahora = new Date();
 
@@ -281,10 +293,7 @@ export const obtenerDisponibilidad = async (req, res) => {
 
     slots.sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime());
 
-    res.json({
-      slots,
-      duracion,
-    });
+    res.json({ slots, duracion });
   } catch (error) {
     console.error("Error al obtener disponibilidad:", error);
     res.status(500).json({ mensaje: "Error al obtener disponibilidad" });
@@ -319,16 +328,19 @@ export const reprogramarCita = async (req, res) => {
     if (!odontologo || !odontologo.activo) {
       return res.status(404).json({ mensaje: "Odontologo no encontrado" });
     }
-    const duracion = odontologo.duracionConsulta || 30;
+    const duracion = 60; // citas de 1 hora
     const finDate = new Date(inicioDate.getTime() + duracion * 60 * 1000);
 
     const diaSemana = inicioDate.getDay();
     const inicioMin = inicioDate.getHours() * 60 + inicioDate.getMinutes();
     const finMin = inicioMin + duracion;
 
-    const horarios = await HorarioOdontologo.findAll({
+    let horarios = await HorarioOdontologo.findAll({
       where: { odontologoId: cita.odontologoId, diaSemana },
     });
+    if (!horarios.length) {
+      horarios = [{ horaInicio: "08:00", horaFin: "20:00" }];
+    }
 
     const estaEnHorario = horarios.some((horario) => {
       const horaInicio = toMinutes(horario.horaInicio);
@@ -450,7 +462,7 @@ export const adminActualizarCita = async (req, res) => {
         return res.status(400).json({ mensaje: "Fecha de inicio invalida" });
       }
       const odontologo = await Odontologo.findByPk(cita.odontologoId);
-      const duracion = odontologo?.duracionConsulta || 30;
+      const duracion = 60; // citas de 1 hora
       const finDate = new Date(inicioDate.getTime() + duracion * 60 * 1000);
 
       // choques

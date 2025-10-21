@@ -214,7 +214,6 @@ export class AdministradorComponent implements OnInit {
     const payload = {
       nombre: o.nombre,
       correo: o.correo,
-      especialidad: o.especialidad,
       telefono: o.telefono,
       duracionConsulta: Number(o.duracionConsulta) || undefined,
       activo: !!o.activo,
@@ -247,7 +246,12 @@ export class AdministradorComponent implements OnInit {
   guardarRol(u: any): void {
     if (!u?.id || !u?.rol) return;
     this.adminService.actualizarRolUsuario(u.id, u.rol).subscribe({
-      next: () => (this.ok = 'Rol actualizado'),
+      next: () => {
+        this.ok = 'Rol actualizado';
+        // Refrescar catálogos para reflejar nuevos odontólogos
+        this.refrescarOdontologos();
+        this.refrescarUsuarios();
+      },
       error: (err) => (this.error = err?.error?.mensaje || 'No se pudo actualizar rol'),
     });
   }

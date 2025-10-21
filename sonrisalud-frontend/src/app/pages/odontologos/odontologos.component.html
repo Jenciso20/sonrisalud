@@ -5,15 +5,87 @@
   </header>
 
   <section class="modulo__seccion">
-    <div class="filtros">
-      <label>Fecha</label>
-      <input type="date" [(ngModel)]="fecha" />
-      <button class="btn btn--primary" (click)="buscar()" [disabled]="loading">{{ loading ? 'Cargando...' : 'Buscar' }}</button>
+    <h2>Nueva cita</h2>
+    <div class="grid">
+      <div class="campo">
+        <label>Paciente</label>
+        <select [(ngModel)]="pacienteId" name="paciente">
+          <option [ngValue]="null">Selecciona paciente</option>
+          <option *ngFor="let p of pacientes" [ngValue]="p.id">{{ p.nombre }} - {{ p.correo }}</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label>Fecha</label>
+        <input type="date" [(ngModel)]="resFecha" (change)="resSlots=[]; resSlotSel=null" />
+      </div>
+      <div class="campo campo--btn">
+        <button class="btn btn--primary" (click)="verDisponibilidadPropia()" [disabled]="resBuscando || !resFecha">{{ resBuscando ? 'Buscando...' : 'Ver disponibilidad' }}</button>
+      </div>
+    </div>
+    <div *ngIf="resSlots.length" class="slots">
+      <div class="slots__header">
+        <h3>Horarios</h3>
+        <span>Duracion: {{ resDuracion }} min</span>
+      </div>
+      <div class="slots__grid">
+        <button class="slot" type="button" *ngFor="let s of resSlots" (click)="seleccionarResSlot(s)" [class.slot--sel]="resSlotSel?.inicio===s.inicio">{{ s.etiqueta }}</button>
+      </div>
+    </div>
+    <textarea class="campo campo--textarea" [(ngModel)]="resMotivo" placeholder="Motivo (opcional)"></textarea>
+    <div class="acciones">
+      <button class="btn btn--accent" (click)="crearCitaComoOd()" [disabled]="resGuardando || !pacienteId || !resSlotSel">{{ resGuardando ? 'Guardando...' : 'Crear cita' }}</button>
+      <button class="btn btn--light" (click)="resSlots=[]; resSlotSel=null">Limpiar</button>
+    </div>
+  </section>
+
+  <section class="modulo__seccion">
+    <div class="agenda-controls">
+      <div class="left">
+        <button class="btn btn--secondary" (click)="prevWeek()">◀ Semana</button>
+        <button class="btn btn--light" (click)="todayWeek()">Hoy</button>
+        <button class="btn btn--secondary" (click)="nextWeek()">Semana ▶</button>
+      </div>
+      <div class="right">
+        <label>Mostrar:</label>
+        <select [(ngModel)]="viewMode" (change)="buscar()">
+          <option value="week">Semana</option>
+          <option value="day">Dia</option>
+        </select>
+        <input *ngIf="viewMode==='day'" type="date" [(ngModel)]="fecha" (change)="buscar()" />
+      </div>
     </div>
 
     <div class="estado" *ngIf="error">{{ error }}</div>
 
-    <div class="tabla">
+    <!-- Vista semanal -->
+    <div class="week" *ngIf="viewMode==='week'">
+      <div class="week__header">
+        <div class="week__timecol"></div>
+        <div class="week__day" *ngFor="let d of weekDays">{{ d.label }}</div>
+      </div>
+      <div class="week__body">
+        <!-- Columna de horas -->
+        <div class="week__timecol">
+          <div class="hour" *ngFor="let h of [].constructor(13); let i = index">{{ (8+i) }}:00</div>
+        </div>
+        <!-- Columnas por dia -->
+        <div class="week__daycol" *ngFor="let d of weekDays">
+          <div class="slot-bg" *ngFor="let h of [].constructor(12)"></div>
+          <div class="event"
+               *ngFor="let e of eventsForDay(d.iso)"
+               [style.top.px]="e.top"
+               [style.height.px]="e.height"
+               [title]="e.title">
+            <span>{{ e.cita.inicio | date:'HH:mm' }} - {{ e.cita.fin | date:'HH:mm' }}</span>
+            <strong>{{ e.title }}</strong>
+            <button class="mini" (click)="abrirAtencion(e.cita)" *ngIf="e.cita.estado!=='atendida'">Atender</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista diaria simple (lista) -->
+    <div class="tabla" *ngIf="viewMode==='day'">
       <div class="tabla__head">
         <div>Hora</div>
         <div>Paciente</div>
@@ -30,7 +102,7 @@
       </div>
     </div>
 
-    <div class="atencion" *ngIf="sel">
+    <div class="atencion card" *ngIf="sel">
       <h3>Atencion clinica</h3>
       <textarea [(ngModel)]="diagnostico" placeholder="Diagnostico"></textarea>
       <textarea [(ngModel)]="tratamiento" placeholder="Tratamiento"></textarea>

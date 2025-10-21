@@ -77,4 +77,8 @@ export class AuthService {
   isOdontologo(): boolean {
     return this.getRole() === 'odontologo';
   }
+
+  isPaciente(): boolean {
+    return this.getRole() === 'paciente';
+  }
 }

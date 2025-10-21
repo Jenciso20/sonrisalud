@@ -14,7 +14,7 @@ export const routes: Routes = [
   { path: 'signup', component: SignupComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'menu', component: MenuComponent, canActivate: [authGuard] },
-  { path: 'pacientes', component: PacientesComponent, canActivate: [authGuard] },
+  { path: 'pacientes', component: PacientesComponent, canActivate: [roleGuard], data: { roles: ['paciente','admin'] } },
   { path: 'odontologos', component: OdontologosComponent, canActivate: [roleGuard], data: { roles: ['odontologo','admin'] } },
   { path: 'administrador', component: AdministradorComponent, canActivate: [roleGuard], data: { roles: ['admin'] } },
   { path: '**', redirectTo: '' },

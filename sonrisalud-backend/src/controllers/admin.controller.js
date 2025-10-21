@@ -137,6 +137,30 @@ export const actualizarRolUsuario = async (req, res) => {
 
     usuario.rol = rol;
     await usuario.save();
+
+    // Si pasa a rol odontologo, asegurar registro en catalogo de odontologos
+    if (rol === "odontologo") {
+      const correo = usuario.correo;
+      const nombre = usuario.nombre || "Odontologo";
+      let od = await Odontologo.findOne({ where: { correo } });
+      if (od) {
+        od.nombre = nombre;
+        od.userId = usuario.id;
+        od.activo = true;
+        await od.save();
+      } else {
+        await Odontologo.create({
+          nombre,
+          correo,
+          especialidad: "General",
+          telefono: usuario.telefono || null,
+          duracionConsulta: 30,
+          userId: usuario.id,
+          activo: true,
+        });
+      }
+    }
+
     res.json({ mensaje: "Rol actualizado", usuario: { id: usuario.id, rol: usuario.rol } });
   } catch (error) {
     console.error("Admin actualizar rol:", error);

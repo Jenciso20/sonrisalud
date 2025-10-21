@@ -8,7 +8,7 @@
         <span class="icon">🏠</span>
         <span class="label" *ngIf="!sidebarCollapsed">Inicio</span>
       </a>
-      <a routerLink="/pacientes" routerLinkActive="active">
+      <a *ngIf="authService.isPaciente() || authService.isAdmin()" routerLink="/pacientes" routerLinkActive="active">
         <span class="icon">👤</span>
         <span class="label" *ngIf="!sidebarCollapsed">Paciente</span>
       </a>
@@ -47,3 +47,5 @@
   <!-- Cuando no esta autenticado, solo se muestra el contenido (login/reset) -->
   <button class="floating-toggle" (click)="toggleSidebar()" *ngIf="false">☰</button>
 </ng-template>
+
+
