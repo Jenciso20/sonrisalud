@@ -1,0 +1,6 @@
+{
+  "build": {
+    "command": "ng build --prod",
+    "outputDirectory": "dist/tu-proyecto"
+  }
+}
