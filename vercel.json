@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "framework": "angular",
+  "buildCommand": "cd sonrisalud-frontend && npm install && npm run build",
+  "outputDirectory": "sonrisalud-frontend/dist/sonrisalud-frontend",
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
