@@ -1,6 +1,0 @@
-{
-  "build": {
-    "command": "npx ng build --prod",
-    "outputDirectory": "dist/sonrisalud-frontend"
-  }
-}
