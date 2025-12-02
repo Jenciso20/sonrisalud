@@ -6,12 +6,14 @@ import {
   cancelarCita,
   obtenerDisponibilidad,
   reprogramarCita,
+  citasOcupadasDia,
 } from "../controllers/citas.controller.js";
 
 const router = express.Router();
 
 // Disponibilidad es visible para usuarios autenticados (paciente u odontologo)
 router.get("/disponibilidad", requireAuth, obtenerDisponibilidad);
+router.get("/ocupadas", requireAuth, citasOcupadasDia);
 // Las siguientes rutas son para pacientes y admin
 router.get("/", requireAuth, requireRole("paciente", "admin"), listarCitasPaciente);
 router.post("/", requireAuth, requireRole("paciente", "admin"), crearCita);

@@ -162,6 +162,27 @@
   color: #fff;
 }
 
+.acciones-rapidas__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.mini-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e3ebf7;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.05);
+}
+.mini-card__info { display: flex; flex-direction: column; gap: 4px; color: #2d3436; }
+.mini-card__info strong { color: #0a3d62; }
+.mini-card__info .estado-pill { background: #ecf0f1; padding: 4px 8px; border-radius: 10px; font-size: 12px; align-self: flex-start; }
+.mini-card__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
 .estado {
   margin: 10px 0;
   padding: 10px;

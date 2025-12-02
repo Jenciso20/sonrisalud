@@ -51,4 +51,10 @@ export class CitasService {
   reprogramarCita(id: number, nuevoInicio: string): Observable<any> {
     return this.http.patch(`${this.apiBase}/citas/${id}/reprogramar`, { nuevoInicio });
   }
+
+  ocupadas(odontologoId: number, fecha: string): Observable<Array<{ inicio: string; fin: string; estado: string; paciente?: any }>> {
+    return this.http.get<Array<{ inicio: string; fin: string; estado: string; paciente?: any }>>(
+      `${this.apiBase}/citas/ocupadas`, { params: { odontologoId, fecha } }
+    );
+  }
 }

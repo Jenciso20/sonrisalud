@@ -1,4 +1,5 @@
 import { sequelize } from "../config/db.js";
+import { logger } from "../utils/logger.js";
 
 export async function runMigrations() {
   const queries = [
@@ -22,9 +23,8 @@ export async function runMigrations() {
       await sequelize.query(sql);
     } catch (err) {
       // Si alguna columna ya existe o hay otro error, lo registramos y seguimos
-      console.warn("Migration warning:", err?.message || err);
+      logger.warn("Migration warning:", err?.message || err);
     }
   }
-  console.log("Migraciones basicas aplicadas (columns: usuarios/odontologos/citas).\n");
+  logger.info("Migraciones basicas aplicadas (columns: usuarios/odontologos/citas).");
 }
-

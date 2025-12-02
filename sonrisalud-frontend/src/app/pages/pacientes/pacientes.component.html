@@ -73,6 +73,23 @@
       </div>
     </div>
 
+    <div class="ocupadas" *ngIf="slotsOcupados.length">
+      <header class="slots__header">
+        <h3>Citas ocupadas</h3>
+        <span>{{ slotsOcupados.length }} reservas</span>
+      </header>
+      <div class="tabla tabla--compacta">
+        <div class="tabla__head">
+          <div>Hora</div>
+          <div>Estado</div>
+        </div>
+        <div class="tabla__row" *ngFor="let o of slotsOcupados">
+          <div>{{ o.inicio | date:'HH:mm' }} - {{ o.fin | date:'HH:mm' }}</div>
+          <div>{{ o.estado }}</div>
+        </div>
+      </div>
+    </div>
+
     <textarea
       class="campo campo--textarea"
       [(ngModel)]="motivo"
@@ -110,6 +127,12 @@
     </div>
 
     <div class="week" *ngIf="viewMode==='week'">
+      <div class="legend">
+        <span><span class="dot dot--pendiente"></span>Pendiente</span>
+        <span><span class="dot dot--confirmada"></span>Confirmada</span>
+        <span><span class="dot dot--atendida"></span>Atendida</span>
+        <span><span class="dot dot--cancelada"></span>Cancelada</span>
+      </div>
       <div class="week__header">
         <div class="week__timecol"></div>
         <div class="week__day" *ngFor="let d of weekDays">{{ d.label }}</div>
@@ -119,13 +142,36 @@
           <div class="hour" *ngFor="let h of [].constructor(13); let i=index">{{ (8+i) }}:00</div>
         </div>
         <div class="week__daycol" *ngFor="let d of weekDays">
+          <div class="current-line" *ngIf="currentLinePosition(d.iso) !== null" [style.top.px]="currentLinePosition(d.iso)"></div>
           <div class="slot-bg" *ngFor="let h of [].constructor(12)"></div>
-          <div class="event" *ngFor="let e of eventsForDay(d.iso)" [style.top.px]="e.top" [style.height.px]="e.height">
-            <span>{{ e.cita.inicio | date:'HH:mm' }} - {{ e.cita.fin | date:'HH:mm' }}</span>
-            <strong>{{ e.title }}</strong>
+          <div class="event" *ngFor="let e of eventsForDay(d.iso)" [ngClass]="e.estadoClass" [style.top.px]="e.top" [style.height.px]="e.height">
+            <span class="event__hora">{{ e.cita.inicio | date:'HH:mm' }}</span>
+            <strong class="event__titulo">{{ e.title }}</strong>
+            <small class="event__estado">{{ e.cita.estado | titlecase }}</small>
+            <small class="event__motivo" *ngIf="e.cita.motivo">“{{ e.cita.motivo }}”</small>
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="acciones-rapidas" *ngIf="citasProximas.length">
+    <header class="citas__header">
+      <h2>Acciones rapidas</h2>
+      <span>Gestiona sin abrir el evento</span>
+    </header>
+    <div class="acciones-rapidas__list">
+      <article class="mini-card" *ngFor="let cita of citasProximas | slice:0:3">
+        <div class="mini-card__info">
+          <strong>{{ cita.inicio | date:'EEE d/MM HH:mm' }}</strong>
+          <span>{{ cita.odontologo?.nombre || 'Odontologo' }}</span>
+          <small class="estado-pill">{{ cita.estado | titlecase }}</small>
+        </div>
+        <div class="mini-card__actions">
+          <button class="btn btn--primary" type="button" (click)="abrirReprogramar(cita)" [disabled]="reprogramandoId === cita.id">Editar</button>
+          <button class="btn btn--danger" type="button" (click)="onCancelar(cita.id)" [disabled]="cancelando.has(cita.id)">Cancelar</button>
+        </div>
+      </article>
     </div>
   </section>
 

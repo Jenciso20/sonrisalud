@@ -1,8 +1,10 @@
 import bcrypt from "bcryptjs";
+import { Op } from "sequelize";
 import { Usuario } from "../models/Usuario.js";
 import { Odontologo } from "../models/Odontologo.js";
 import { Cita } from "../models/Cita.js";
 import { HorarioOdontologo } from "../models/HorarioOdontologo.js";
+import { logger } from "../utils/logger.js";
 
 export const listarPacientes = async (req, res) => {
   try {
@@ -13,7 +15,7 @@ export const listarPacientes = async (req, res) => {
     });
     res.json(pacientes);
   } catch (error) {
-    console.error("Admin listar pacientes:", error);
+    logger.error("Admin listar pacientes:", error);
     res.status(500).json({ mensaje: "Error al listar pacientes" });
   }
 };
@@ -35,7 +37,7 @@ export const actualizarPaciente = async (req, res) => {
     await paciente.save();
     res.json({ mensaje: "Paciente actualizado", paciente });
   } catch (error) {
-    console.error("Admin actualizar paciente:", error);
+    logger.error("Admin actualizar paciente:", error);
     res.status(500).json({ mensaje: "Error al actualizar paciente" });
   }
 };
@@ -58,7 +60,7 @@ export const eliminarPaciente = async (req, res) => {
     await paciente.destroy();
     res.json({ mensaje: "Paciente eliminado" });
   } catch (error) {
-    console.error("Admin eliminar paciente:", error);
+    logger.error("Admin eliminar paciente:", error);
     res.status(500).json({ mensaje: "Error al eliminar paciente" });
   }
 };
@@ -81,7 +83,7 @@ export const actualizarOdontologo = async (req, res) => {
     await odontologo.save();
     res.json({ mensaje: "Odontologo actualizado", odontologo });
   } catch (error) {
-    console.error("Admin actualizar odontologo:", error);
+    logger.error("Admin actualizar odontologo:", error);
     res.status(500).json({ mensaje: "Error al actualizar odontologo" });
   }
 };
@@ -105,7 +107,7 @@ export const eliminarOdontologo = async (req, res) => {
     await odontologo.destroy();
     res.json({ mensaje: "Odontologo eliminado" });
   } catch (error) {
-    console.error("Admin eliminar odontologo:", error);
+    logger.error("Admin eliminar odontologo:", error);
     res.status(500).json({ mensaje: "Error al eliminar odontologo" });
   }
 };
@@ -118,7 +120,7 @@ export const listarUsuarios = async (req, res) => {
     });
     res.json(usuarios);
   } catch (error) {
-    console.error("Admin listar usuarios:", error);
+    logger.error("Admin listar usuarios:", error);
     res.status(500).json({ mensaje: "Error al listar usuarios" });
   }
 };
@@ -163,7 +165,7 @@ export const actualizarRolUsuario = async (req, res) => {
 
     res.json({ mensaje: "Rol actualizado", usuario: { id: usuario.id, rol: usuario.rol } });
   } catch (error) {
-    console.error("Admin actualizar rol:", error);
+    logger.error("Admin actualizar rol:", error);
     res.status(500).json({ mensaje: "Error al actualizar rol" });
   }
 };
@@ -183,7 +185,43 @@ export const reportesCitas = async (req, res) => {
     const totalAtendidas = await Cita.count({ where: { ...where, estado: 'atendida' } });
     res.json({ pendientes: totalPendientes, confirmadas: totalConfirmadas, canceladas: totalCanceladas, atendidas: totalAtendidas });
   } catch (error) {
-    console.error('Admin reportes citas:', error);
+    logger.error('Admin reportes citas:', error);
     res.status(500).json({ mensaje: 'Error al generar reportes' });
+  }
+};
+
+export const eliminarUsuario = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const usuario = await Usuario.findByPk(id);
+    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
+
+    if (usuario.id === req.usuario?.id) {
+      return res.status(400).json({ mensaje: "No puedes eliminar tu propia cuenta" });
+    }
+
+    if (usuario.rol === "admin") {
+      const totalAdmins = await Usuario.count({ where: { rol: "admin", id: { [Op.ne]: usuario.id } } });
+      if (totalAdmins === 0) {
+        return res.status(400).json({ mensaje: "No se puede eliminar el ultimo admin" });
+      }
+    }
+
+    // Eliminar citas y dependencias de manera forzada para admin
+    await Cita.destroy({ where: { pacienteId: usuario.id } });
+    const od = await Odontologo.findOne({
+      where: { [Op.or]: [{ userId: usuario.id }, { correo: usuario.correo }] },
+    });
+    if (od) {
+      await Cita.destroy({ where: { odontologoId: od.id } });
+      await HorarioOdontologo.destroy({ where: { odontologoId: od.id } });
+      await od.destroy();
+    }
+
+    await usuario.destroy();
+    res.json({ mensaje: "Usuario eliminado" });
+  } catch (error) {
+    logger.error("Admin eliminar usuario:", error);
+    res.status(500).json({ mensaje: "Error al eliminar usuario" });
   }
 };

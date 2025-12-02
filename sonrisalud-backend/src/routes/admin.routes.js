@@ -9,12 +9,15 @@ import {
   listarUsuarios,
   actualizarRolUsuario,
   reportesCitas,
+  eliminarUsuario,
 } from "../controllers/admin.controller.js";
 import {
   adminListarCitas,
   adminCrearCita,
   adminActualizarCita,
   adminCancelarCita,
+  adminEnviarRecordatorio,
+  adminWhatsAppEnabled,
   obtenerDisponibilidad,
 } from "../controllers/citas.controller.js";
 
@@ -33,6 +36,8 @@ router.get("/citas", adminListarCitas);
 router.post("/citas", adminCrearCita);
 router.patch("/citas/:id", adminActualizarCita);
 router.patch("/citas/:id/cancelar", adminCancelarCita);
+router.post("/citas/:id/recordatorio", adminEnviarRecordatorio);
+router.get("/whatsapp/enabled", adminWhatsAppEnabled);
 
 // Reutiliza disponibilidad
 router.get("/disponibilidad", obtenerDisponibilidad);
@@ -44,6 +49,7 @@ router.delete("/odontologos/:id", eliminarOdontologo);
 // Usuarios (roles)
 router.get("/usuarios", listarUsuarios);
 router.patch("/usuarios/:id/rol", actualizarRolUsuario);
+router.delete("/usuarios/:id", eliminarUsuario);
 router.get("/reportes/citas", reportesCitas);
 
 export default router;

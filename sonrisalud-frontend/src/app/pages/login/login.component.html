@@ -6,7 +6,7 @@
       <p class="subtitle">Sistema Inteligente Odontologico</p>
     </div>
 
-    <!-- Tabs ocultas por politica de solo login -->
+    <!-- Tabs login / registro -->
 
         <form *ngIf="isLogin" (ngSubmit)="onLogin()">
       <div class="input-group">
@@ -23,20 +23,20 @@
       <button type="submit" class="btn-login" [disabled]="isSubmitting">
         {{ isSubmitting ? 'Cargando...' : 'Iniciar sesion' }}
       </button>
-      <div class="small-links">
-        <a routerLink="/signup">Crear cuenta</a>
+      <div class="small-links" *ngIf="allowRegister">
+        <a href="#" (click)="goRegister(); $event.preventDefault()">Crear cuenta</a>
       </div>
     </form>
 
-    <form *ngIf="allowRegister && !isLogin" (ngSubmit)="onRegister()" hidden>
+    <form *ngIf="allowRegister && !isLogin" (ngSubmit)="onRegister()">
       <div class="input-group">
         <label>Nombre</label>
-        <input type="text" [(ngModel)]="nombre" name="nombre" required placeholder="Nombres" />
+        <input type="text" [(ngModel)]="nombre" name="nombre" required placeholder="Nombres" maxlength="100" />
       </div>
 
       <div class="input-group">
         <label>Apellidos</label>
-        <input type="text" [(ngModel)]="apellidos" name="apellidos" required placeholder="Apellidos" />
+        <input type="text" [(ngModel)]="apellidos" name="apellidos" placeholder="Apellidos" maxlength="100" />
       </div>
 
       <div class="input-group">
@@ -46,19 +46,35 @@
 
       <div class="input-group">
         <label>Contrasena</label>
-        <input type="password" [(ngModel)]="password" name="password" required placeholder="********" />
+        <input type="password" [(ngModel)]="password" name="password" required placeholder="********" minlength="8" />
       </div>
 
       <div class="input-group">
         <label>Confirmar contrasena</label>
-        <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required placeholder="Repite la contrasena" />
+        <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required placeholder="Repite la contrasena" minlength="8" />
+      </div>
+
+      <div class="input-group">
+        <label>Telefono (opcional)</label>
+        <input type="tel" [(ngModel)]="telefono" name="telefono" placeholder="Ej: 999999999" pattern="^9\\d{8}$" maxlength="9" />
+      </div>
+
+      <div class="input-group">
+        <label>DNI (opcional)</label>
+        <input type="text" [(ngModel)]="dni" name="dni" placeholder="DNI" pattern="^\\d{8}$" maxlength="8" />
+      </div>
+
+      <div class="input-group">
+        <label>Codigo Universitario (opcional)</label>
+        <input type="text" [(ngModel)]="codigoUniversitario" name="codigoUniversitario" placeholder="Codigo Universitario" />
       </div>
 
       <button type="submit" class="btn-login" [disabled]="isSubmitting">
         {{ isSubmitting ? 'Cargando...' : 'Crear cuenta' }}
       </button>
-
-      <!-- Enlace de volver oculto -->
+      <div class="small-links">
+        <a href="#" (click)="goLogin(); $event.preventDefault()">Ya tengo cuenta</a>
+      </div>
     </form>
 
     <p *ngIf="successMsg" class="success">{{ successMsg }}</p>

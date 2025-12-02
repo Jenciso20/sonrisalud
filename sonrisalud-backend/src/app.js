@@ -10,17 +10,49 @@ import { runMigrations } from "./migrations/runMigrations.js";
 import "./models/index.js";
 import { Usuario } from "./models/Usuario.js";
 import bcrypt from "bcryptjs";
+import { rateLimit } from "./middleware/rateLimit.js";
+import { requestLogger } from "./middleware/requestLogger.js";
+import { logger } from "./utils/logger.js";
+import { startReminderJob } from "./jobs/reminderJob.js";
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+const allowedOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const corsOptions = {
+  origin: allowedOrigins.length === 0 ? true : (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("Origen no permitido por CORS"));
+  },
+  credentials: true,
+};
 
-app.use("/api/auth", authRoutes);
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(requestLogger);
+
+// Rate limit solo para rutas sensibles (auth y recuperación)
+const authLimiter = rateLimit({
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+  max: Number(process.env.RATE_LIMIT_MAX || 30),
+});
+
+app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/odontologos", odontologosRoutes);
 app.use("/api/citas", citasRoutes);
 app.use("/api/admin", adminRoutes);
+
+// Error handler global
+app.use((err, _req, res, _next) => {
+  logger.error("Error no controlado", err);
+  if (err?.message?.includes("CORS")) {
+    return res.status(401).json({ mensaje: "Origen no permitido" });
+  }
+  return res.status(500).json({ mensaje: "Error interno del servidor" });
+});
 
 const PORT = process.env.PORT || 3000;
 const shouldAlter = (process.env.DB_SYNC_ALTER || "").toLowerCase() === "true";
@@ -29,7 +61,7 @@ const syncOptions = shouldAlter ? { alter: true } : {};
 sequelize
   .sync(syncOptions)
   .then(() => {
-    console.log("Base de datos sincronizada correctamente.");
+    logger.info("Base de datos sincronizada correctamente.");
     // Aplicar migraciones ligeras (ADD COLUMN IF NOT EXISTS)
     (async () => {
       await runMigrations();
@@ -49,7 +81,7 @@ sequelize
               existente.password = hashed;
               existente.rol = "admin";
               await existente.save();
-              console.log(`Usuario existente promovido a admin: ${adminEmail}`);
+              logger.info(`Usuario existente promovido a admin: ${adminEmail}`);
             } else {
               await Usuario.create({
                 nombre: adminNombre,
@@ -57,18 +89,19 @@ sequelize
                 password: hashed,
                 rol: "admin",
               });
-              console.log(`Admin inicial creado: ${adminEmail}`);
+              logger.info(`Admin inicial creado: ${adminEmail}`);
             }
           } else {
-            console.warn("No hay ADMIN_EMAIL/ADMIN_PASSWORD definidos; crea un admin manualmente.");
+            logger.warn("No hay ADMIN_EMAIL/ADMIN_PASSWORD definidos; crea un admin manualmente.");
           }
         }
       } catch (e) {
-        console.error("Error al crear admin inicial:", e);
+        logger.error("Error al crear admin inicial:", e);
       }
     })();
     app.listen(PORT, () => {
-      console.log(`Servidor corriendo en http://localhost:${PORT}`);
+      logger.info(`Servidor corriendo en http://localhost:${PORT}`);
+      startReminderJob();
     });
   })
-  .catch((error) => console.error("Error al conectar con la base de datos:", error));
+  .catch((error) => logger.error("Error al conectar con la base de datos:", error));

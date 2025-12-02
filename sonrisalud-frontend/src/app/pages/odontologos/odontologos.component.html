@@ -4,7 +4,7 @@
     <a routerLink="/menu" class="modulo__volver">Volver al menu</a>
   </header>
 
-  <section class="modulo__seccion">
+  <section class="modulo__seccion" *ngIf="viewTab==='agenda'">
     <h2>Nueva cita</h2>
     <div class="grid">
       <div class="campo">
@@ -38,14 +38,27 @@
     </div>
   </section>
 
-  <section class="modulo__seccion">
+  <section class="modulo__seccion" *ngIf="viewTab==='agenda'">
     <div class="agenda-controls">
       <div class="left">
-        <button class="btn btn--secondary" (click)="prevWeek()">◀ Semana</button>
+        <button class="btn btn--secondary" (click)="prevWeek()">← Semana</button>
         <button class="btn btn--light" (click)="todayWeek()">Hoy</button>
-        <button class="btn btn--secondary" (click)="nextWeek()">Semana ▶</button>
+        <button class="btn btn--secondary" (click)="nextWeek()">Semana →</button>
       </div>
       <div class="right">
+        <label>Estado:</label>
+        <select [(ngModel)]="filterEstado" (change)="buscar()">
+          <option [ngValue]="null">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="confirmada">Confirmada</option>
+          <option value="atendida">Atendida</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+        <label>Paciente:</label>
+        <select [(ngModel)]="filterPacienteId" (change)="buscar()">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let p of pacientes" [ngValue]="p.id">{{ p.nombre }}</option>
+        </select>
         <label>Mostrar:</label>
         <select [(ngModel)]="viewMode" (change)="buscar()">
           <option value="week">Semana</option>
@@ -59,9 +72,19 @@
 
     <!-- Vista semanal -->
     <div class="week" *ngIf="viewMode==='week'">
+      <div class="legend">
+        <span><span class="dot dot--pendiente"></span>Pendiente</span>
+        <span><span class="dot dot--confirmada"></span>Confirmada</span>
+        <span><span class="dot dot--atendida"></span>Atendida</span>
+        <span><span class="dot dot--cancelada"></span>Cancelada</span>
+      </div>
       <div class="week__header">
         <div class="week__timecol"></div>
-        <div class="week__day" *ngFor="let d of weekDays">{{ d.label }}</div>
+        <div class="week__day" *ngFor="let d of weekDays">
+          <span>{{ d.label }}</span>
+          <span class="badge badge--today" *ngIf="isToday(d.iso)">Hoy</span>
+          <span class="badge badge--tomorrow" *ngIf="isTomorrow(d.iso)">Mañana</span>
+        </div>
       </div>
       <div class="week__body">
         <!-- Columna de horas -->
@@ -69,19 +92,28 @@
           <div class="hour" *ngFor="let h of [].constructor(13); let i = index">{{ (8+i) }}:00</div>
         </div>
         <!-- Columnas por dia -->
-        <div class="week__daycol" *ngFor="let d of weekDays">
+        <div class="week__daycol"
+             *ngFor="let d of weekDays"
+             (dragover)="onDragOver($event)"
+             (drop)="onDrop($event, d.iso)">
           <div class="slot-bg" *ngFor="let h of [].constructor(12)"></div>
           <div class="event"
                *ngFor="let e of eventsForDay(d.iso)"
                [style.top.px]="e.top"
                [style.height.px]="e.height"
-               [title]="e.title">
-            <span>{{ e.cita.inicio | date:'HH:mm' }} - {{ e.cita.fin | date:'HH:mm' }}</span>
-            <strong>{{ e.title }}</strong>
-            <button class="mini" (click)="abrirAtencion(e.cita)" *ngIf="e.cita.estado!=='atendida'">Atender</button>
+               [title]="e.title"
+               draggable="true"
+               (dragstart)="onDragStart(e.cita)"
+               (dragend)="onDragEnd()"
+               [ngClass]="estadoClase(e.cita.estado)">
+            <span class="event__hora">{{ e.cita.inicio | date:'HH:mm' }}</span>
+            <strong class="event__titulo">{{ e.title }}</strong>
+            <small class="estado-pill">{{ e.cita.estado }}</small>
+            <small class="event__motivo" *ngIf="e.cita.motivo">“{{ e.cita.motivo }}”</small>
           </div>
         </div>
       </div>
+      <div class="hint">Arrastra una tarjeta a otro dia/hora para reprogramar.</div>
     </div>
 
     <!-- Vista diaria simple (lista) -->
@@ -94,22 +126,91 @@
       </div>
       <div class="tabla__row" *ngFor="let c of citas">
         <div>{{ c.inicio | date:'HH:mm' }} - {{ c.fin | date:'HH:mm' }}</div>
-        <div>#{{ c.pacienteId }}</div>
+        <div>{{ c.paciente?.nombre || ('#' + c.pacienteId) }}</div>
         <div>{{ c.estado }}</div>
         <div>
-          <button class="btn btn--primary" (click)="abrirAtencion(c)" *ngIf="c.estado !== 'atendida'">Atender</button>
+          <button class="btn btn--primary" (click)="abrirAtencion(c)" *ngIf="c.estado !== 'atendida' && c.estado !== 'cancelada'">Atender</button>
+          <button class="btn btn--danger" (click)="cancelarOd(c)" *ngIf="c.estado !== 'cancelada'">Cancelar</button>
         </div>
       </div>
     </div>
 
     <div class="atencion card" *ngIf="sel">
       <h3>Atencion clinica</h3>
-      <textarea [(ngModel)]="diagnostico" placeholder="Diagnostico"></textarea>
-      <textarea [(ngModel)]="tratamiento" placeholder="Tratamiento"></textarea>
-      <textarea [(ngModel)]="observaciones" placeholder="Observaciones"></textarea>
+      <div class="nota-status" *ngIf="savingDraft">Guardando borrador...</div>
+      <div class="nota-status" *ngIf="!savingDraft && lastDraftAt">Borrador guardado a las {{ lastDraftAt }}</div>
+      <textarea [(ngModel)]="diagnostico" (ngModelChange)="onNotasChange()" placeholder="Diagnostico"></textarea>
+      <textarea [(ngModel)]="tratamiento" (ngModelChange)="onNotasChange()" placeholder="Tratamiento"></textarea>
+      <textarea [(ngModel)]="observaciones" (ngModelChange)="onNotasChange()" placeholder="Observaciones"></textarea>
+      <textarea [(ngModel)]="nota" (ngModelChange)="onNotasChange()" placeholder="Nota general (opcional)"></textarea>
       <div class="acciones">
-        <button class="btn btn--accent" (click)="atender()" [disabled]="guardando">{{ guardando ? 'Guardando...' : 'Guardar' }}</button>
+        <button class="btn" (click)="guardarNotas(false)" [disabled]="guardando">{{ guardando ? 'Guardando...' : 'Guardar notas' }}</button>
+        <button class="btn btn--accent" (click)="atender()" [disabled]="guardando">Finalizar atencion</button>
         <button class="btn btn--light" (click)="cerrarAtencion()">Cerrar</button>
+      </div>
+      <div class="historial" *ngIf="sel">
+        <h4>Historial del paciente</h4>
+        <div *ngIf="loadingHist" class="estado">Cargando historial...</div>
+        <div *ngIf="!loadingHist && !historial.length" class="estado">Sin atenciones registradas</div>
+        <div class="tabla" *ngIf="!loadingHist && historial.length">
+          <div class="tabla__head">
+            <div>Fecha</div>
+            <div>Odontologo</div>
+            <div>Estado</div>
+            <div>Nota</div>
+          </div>
+          <div class="tabla__row" *ngFor="let h of historial">
+            <div>{{ h.inicio | date:'dd/MM HH:mm' }}</div>
+            <div>{{ h.odontologo?.nombre || h.odontologoId }}</div>
+            <div>{{ h.estado }}</div>
+            <div>{{ h.nota || h.motivo || '-' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="acciones-rapidas" *ngIf="citasProximas.length">
+    <div class="seccion__header">
+      <h2>Acciones rapidas</h2>
+      <span>Gestiona sin abrir el horario</span>
+    </div>
+    <div class="acciones-rapidas__list">
+      <article class="mini-card" *ngFor="let c of citasProximas | slice:0:5">
+        <div class="mini-card__info">
+          <strong>{{ c.inicio | date:'EEE d/MM HH:mm' }}</strong>
+          <span>Paciente: {{ c.paciente?.nombre || ('#'+c.pacienteId) }}</span>
+          <small class="estado-pill">{{ c.estado }}</small>
+        </div>
+        <div class="mini-card__actions">
+          <button class="btn btn--primary" type="button" (click)="abrirAtencion(c)">Atender</button>
+          <button class="btn btn--danger" type="button" (click)="cancelarOd(c)" [disabled]="c.estado==='cancelada'">Cancelar</button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Historial (pestana) -->
+  <section class="modulo__seccion" *ngIf="viewTab==='historial'">
+    <div class="seccion__header">
+      <h2>Historial de atenciones</h2>
+      <button class="btn btn--light" (click)="viewTab='agenda'">Volver a agenda</button>
+    </div>
+    <div class="estado" *ngIf="error">{{ error }}</div>
+    <div class="estado" *ngIf="loadingHistPropio">Cargando...</div>
+    <div class="estado" *ngIf="!loadingHistPropio && historialPropio.length===0">Sin registros</div>
+    <div class="tabla" *ngIf="!loadingHistPropio && historialPropio.length">
+      <div class="tabla__head">
+        <div>Fecha</div>
+        <div>Paciente</div>
+        <div>Estado</div>
+        <div>Detalle</div>
+      </div>
+      <div class="tabla__row" *ngFor="let r of historialPropio">
+        <div>{{ r.inicio | date:'dd/MM HH:mm' }} - {{ r.fin | date:'HH:mm' }}</div>
+        <div>{{ r.paciente?.nombre || ('#'+r.pacienteId) }}</div>
+        <div>{{ r.estado }}</div>
+        <div>{{ r.nota || r.motivo || '-' }}</div>
       </div>
     </div>
   </section>

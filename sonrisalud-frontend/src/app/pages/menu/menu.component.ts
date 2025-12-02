@@ -56,9 +56,9 @@ export class MenuComponent {
       items: [
         'Gestion de usuarios: ver, editar o eliminar pacientes y odontologos.',
         'Asignacion de roles y restablecimiento manual de contrasenas.',
-        'Configuracion de servicios y especialidades con precio y duracion.',
+        'Configuracion de servicios y especialidades (sin cobros).',
         'Reportes de citas por periodo o especialidad.',
-        'Seguimiento de pacientes nuevos e ingresos generados.',
+        'Seguimiento de pacientes nuevos y atenciones realizadas (sin costos).',
         'Gestion de notificaciones y campanas por correo.',
         'Monitoreo de logs de correo para citas confirmadas o canceladas.'
       ]

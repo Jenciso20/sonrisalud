@@ -2,6 +2,15 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { Usuario } from "../models/Usuario.js";
+import { logger } from "../utils/logger.js";
+import {
+  validateLoginPayload,
+  validateRecoverPayload,
+  validateRegisterPayload,
+  validateResetPayload,
+  validateProfilePayload,
+} from "../utils/validators.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:4200";
 const EMAIL_HOST = process.env.EMAIL_HOST || "smtp.gmail.com";
@@ -13,10 +22,16 @@ const EMAIL_SECURE =
 
 // Login
 export const login = async (req, res) => {
+  const validation = validateLoginPayload(req.body);
+  if (!validation.valid) {
+    return res.status(400).json({ mensaje: "Datos invalidos", errores: validation.errors });
+  }
+
   try {
     const { correo, password } = req.body;
+    const correoLower = correo.toLowerCase().trim();
 
-    const usuario = await Usuario.findOne({ where: { correo } });
+    const usuario = await Usuario.findOne({ where: { correo: correoLower } });
     if (!usuario) {
       return res.status(400).json({ mensaje: "Usuario no encontrado" });
     }
@@ -34,25 +49,22 @@ export const login = async (req, res) => {
 
     res.json({ mensaje: "Login exitoso", token });
   } catch (error) {
-    console.error(error);
+    logger.error("login error", error);
     res.status(500).json({ mensaje: "Error al iniciar sesion" });
   }
 };
 
 // Registro
 export const register = async (req, res) => {
+  const validation = validateRegisterPayload(req.body);
+  if (!validation.valid) {
+    return res.status(400).json({ mensaje: "Datos invalidos", errores: validation.errors });
+  }
+
   try {
     const { nombre, apellidos, correo, password, telefono, dni, codigoUniversitario } = req.body;
 
-    if (!nombre || !correo || !password) {
-      return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
-    }
-
-    // Validar correo institucional
     const correoLower = String(correo).toLowerCase().trim();
-    if (!correoLower.endsWith("@unajma.edu.pe")) {
-      return res.status(400).json({ mensaje: "Usa tu correo institucional @unajma.edu.pe" });
-    }
 
     const existeUsuario = await Usuario.findOne({ where: { correo: correoLower } });
     if (existeUsuario) {
@@ -74,13 +86,18 @@ export const register = async (req, res) => {
 
     res.json({ mensaje: "Usuario registrado correctamente", usuario: nuevoUsuario });
   } catch (error) {
-    console.error(error);
+    logger.error("register error", error);
     res.status(500).json({ mensaje: "Error al registrar usuario" });
   }
 };
 
 // Recuperar contrasena
 export const recoverPassword = async (req, res) => {
+  const validation = validateRecoverPayload(req.body);
+  if (!validation.valid) {
+    return res.status(400).json({ mensaje: "Correo invalido", errores: validation.errors });
+  }
+
   const { correo } = req.body;
 
   try {
@@ -124,16 +141,21 @@ export const recoverPassword = async (req, res) => {
       `,
     });
 
-    console.log(`Enlace de recuperacion generado para ${correo}: ${link}`);
+    logger.info(`Enlace de recuperacion generado para ${correo}: ${link}`);
     res.json({ mensaje: "Correo de recuperacion enviado. Revisa tu bandeja de entrada." });
   } catch (error) {
-    console.error(error);
+    logger.error("recover error", error);
     res.status(500).json({ mensaje: "Error al enviar el correo." });
   }
 };
 
 // Restablecer contrasena
 export const resetPassword = async (req, res) => {
+  const validation = validateResetPayload(req.body);
+  if (!validation.valid) {
+    return res.status(400).json({ mensaje: "Datos invalidos", errores: validation.errors });
+  }
+
   try {
     const { token, nuevaPassword } = req.body;
 
@@ -150,7 +172,70 @@ export const resetPassword = async (req, res) => {
 
     res.json({ mensaje: "Contrasena actualizada correctamente." });
   } catch (error) {
-    console.error(error);
+    logger.error("reset error", error);
     res.status(400).json({ mensaje: "Token invalido o expirado" });
+  }
+};
+
+// Perfil propio
+export const getProfile = async (req, res) => {
+  try {
+    const usuario = await Usuario.findByPk(req.usuario.id, {
+      attributes: ["id", "nombre", "apellidos", "correo", "telefono", "dni", "codigoUniversitario", "rol"],
+    });
+    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    res.json(usuario);
+  } catch (error) {
+    logger.error("getProfile error", error);
+    res.status(500).json({ mensaje: "Error al obtener perfil" });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const usuario = await Usuario.findByPk(req.usuario.id);
+    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
+
+    const validation = validateProfilePayload(req.body || {});
+    if (!validation.valid) {
+      return res.status(400).json({ mensaje: "Datos invalidos", errores: validation.errors });
+    }
+
+    const { nombre, apellidos, telefono, dni, codigoUniversitario, newPassword, currentPassword } = req.body || {};
+
+    if (nombre !== undefined) usuario.nombre = nombre;
+    if (apellidos !== undefined) usuario.apellidos = apellidos;
+    if (telefono !== undefined) usuario.telefono = telefono;
+    if (dni !== undefined) usuario.dni = dni;
+    if (codigoUniversitario !== undefined) usuario.codigoUniversitario = codigoUniversitario;
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ mensaje: "Debes ingresar tu password actual" });
+      }
+      const ok = await bcrypt.compare(currentPassword, usuario.password);
+      if (!ok) {
+        return res.status(400).json({ mensaje: "Password actual incorrecto" });
+      }
+      usuario.password = await bcrypt.hash(newPassword, 10);
+    }
+
+    await usuario.save();
+    res.json({
+      mensaje: "Perfil actualizado",
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellidos: usuario.apellidos,
+        correo: usuario.correo,
+        telefono: usuario.telefono,
+        dni: usuario.dni,
+        codigoUniversitario: usuario.codigoUniversitario,
+        rol: usuario.rol,
+      },
+    });
+  } catch (error) {
+    logger.error("updateProfile error", error);
+    res.status(500).json({ mensaje: "Error al actualizar perfil" });
   }
 };

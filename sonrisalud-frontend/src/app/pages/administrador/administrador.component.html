@@ -104,9 +104,30 @@
           <input type="text" [(ngModel)]="c.motivo" (blur)="actualizar(c.id, c.estado, c.motivo)" />
         </div>
         <div>
+          <button *ngIf="waEnabled" class="btn btn--primary" (click)="recordar(c.id)" title="Enviar recordatorio por WhatsApp">Recordatorio</button>
           <button class="btn btn--danger" (click)="cancelar(c.id)" [disabled]="c.estado === 'cancelada'">Cancelar</button>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="modulo__seccion" *ngIf="citas.length">
+    <div class="seccion__header">
+      <h2>Acciones rapidas</h2>
+      <span>Editar o cancelar sin abrir la fila</span>
+    </div>
+    <div class="acciones-rapidas__list">
+      <article class="mini-card" *ngFor="let c of citas | slice:0:5">
+        <div class="mini-card__info">
+          <strong>{{ c.inicio | date:'EEE d/MM HH:mm' }}</strong>
+          <span>{{ c.paciente?.nombre || ('#'+c.pacienteId) }}</span>
+          <small class="estado-pill">{{ c.estado }}</small>
+        </div>
+        <div class="mini-card__actions">
+          <button class="btn btn--primary" type="button" (click)="actualizar(c.id, c.estado, c.motivo)">Editar</button>
+          <button class="btn btn--danger" type="button" (click)="cancelar(c.id)" [disabled]="c.estado==='cancelada'">Cancelar</button>
+        </div>
+      </article>
     </div>
   </section>
 
@@ -190,8 +211,10 @@
         </div>
         <div class="acciones">
           <button class="btn btn--primary" (click)="guardarRol(u)">Guardar</button>
+          <button class="btn btn--danger" (click)="borrarUsuario(u)">Eliminar</button>
         </div>
       </div>
     </div>
   </section>
 </div>
+

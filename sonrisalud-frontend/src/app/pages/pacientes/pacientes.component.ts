@@ -46,6 +46,7 @@ export class PacientesComponent implements OnInit {
   selectedOdontologoId: number | null = null;
   selectedFecha = '';
   slotsDisponibles: SlotDisponible[] = [];
+  slotsOcupados: Array<{ inicio: string; fin: string; estado: string; paciente?: any }> = [];
   slotSeleccionado: SlotDisponible | null = null;
   motivo = '';
   buscandoSlots = false;
@@ -160,11 +161,16 @@ export class PacientesComponent implements OnInit {
               'No hay horarios disponibles para la fecha seleccionada. Intenta con otro dia.';
           }
           this.buscandoSlots = false;
+          // cargar ocupadas en paralelo
+          this.citasService
+            .ocupadas(this.selectedOdontologoId!, this.selectedFecha!)
+            .subscribe({ next: (r) => (this.slotsOcupados = r || []), error: () => (this.slotsOcupados = []) });
         },
         error: (err: any) => {
           this.errorMsg =
             err?.error?.mensaje || 'No se pudo obtener la disponibilidad.';
           this.slotsDisponibles = [];
+          this.slotsOcupados = [];
           this.buscandoSlots = false;
         }
       });
@@ -284,7 +290,7 @@ export class PacientesComponent implements OnInit {
   }
 
   // Eventos para un dia especifico del calendario
-  eventsForDay(iso: string): Array<{ cita: Cita; title: string; top: number; height: number }> {
+  eventsForDay(iso: string): Array<{ cita: Cita; title: string; top: number; height: number; estadoClass: string }> {
     const startMinutes = this.dayStartMinutes;
     const endMinutes = this.dayEndMinutes;
     const pxPerMin = this.pxPerMinute || 1;
@@ -302,10 +308,27 @@ export class PacientesComponent implements OnInit {
       const top = Math.max(0, (clampedStart - startMinutes) * pxPerMin);
       const height = Math.max(10, (clampedEnd - clampedStart) * pxPerMin);
       const title = c.odontologo?.nombre || 'Cita';
-      return { cita: c, title, top, height };
+      return { cita: c, title, top, height, estadoClass: this.estadoClass(c.estado) };
     });
 
     return events;
+  }
+
+  estadoClass(estado: string): string {
+    const e = (estado || '').toLowerCase();
+    if (e === 'confirmada') return 'event--confirmada';
+    if (e === 'cancelada') return 'event--cancelada';
+    if (e === 'atendida') return 'event--atendida';
+    return 'event--pendiente';
+  }
+
+  currentLinePosition(dayIso: string): number | null {
+    const todayIso = this.formatIsoDate(new Date());
+    if (dayIso !== todayIso) return null;
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    if (minutes < this.dayStartMinutes || minutes > this.dayEndMinutes) return null;
+    return (minutes - this.dayStartMinutes) * this.pxPerMinute;
   }
 
   obtenerEtiquetaOdontologo(odontologo: any): string {

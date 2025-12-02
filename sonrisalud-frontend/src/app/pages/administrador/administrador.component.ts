@@ -39,6 +39,7 @@ export class AdministradorComponent implements OnInit {
   creando = false;
   error = '';
   ok = '';
+  waEnabled = false;
 
   constructor(
     private adminService: AdminService,
@@ -47,6 +48,10 @@ export class AdministradorComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarCat();
+    this.adminService.whatsappEnabled().subscribe({
+      next: (r) => (this.waEnabled = !!r?.enabled),
+      error: () => (this.waEnabled = false),
+    });
     this.buscarCitas();
   }
 
@@ -175,6 +180,13 @@ export class AdministradorComponent implements OnInit {
     });
   }
 
+  recordar(id: number): void {
+    this.adminService.enviarRecordatorioCita(id).subscribe({
+      next: () => (this.ok = 'Recordatorio enviado'),
+      error: (err) => (this.error = err?.error?.mensaje || 'No se pudo enviar recordatorio'),
+    });
+  }
+
   actualizar(id: number, estado: string, motivo: string): void {
     this.adminService.actualizarCita(id, { estado, motivo }).subscribe({
       next: () => {
@@ -253,6 +265,24 @@ export class AdministradorComponent implements OnInit {
         this.refrescarUsuarios();
       },
       error: (err) => (this.error = err?.error?.mensaje || 'No se pudo actualizar rol'),
+    });
+  }
+
+  borrarUsuario(u: any): void {
+    if (!u?.id) return;
+    if (!confirm(`Eliminar usuario ${u.correo}?`)) return;
+    this.adminService.eliminarUsuario(u.id).subscribe({
+      next: () => {
+        this.ok = 'Usuario eliminado';
+        this.error = '';
+        this.usuarios = this.usuarios.filter((x) => x.id !== u.id);
+        // Refrescar lista para mantener consistencia con backend
+        this.refrescarUsuarios();
+        // Refrescar catálogos dependientes
+        this.refrescarPacientes();
+        this.refrescarOdontologos();
+      },
+      error: (err) => (this.error = err?.error?.mensaje || 'No se pudo eliminar el usuario'),
     });
   }
 }

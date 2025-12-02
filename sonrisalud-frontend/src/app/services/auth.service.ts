@@ -20,6 +20,22 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/register`, data);
   }
 
+  getProfile(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/me`);
+  }
+
+  updateProfile(payload: {
+    nombre?: string;
+    apellidos?: string;
+    telefono?: string;
+    dni?: string;
+    codigoUniversitario?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/me`, payload);
+  }
+
   recoverPassword(email: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/recover`, { correo: email });
   }
@@ -40,8 +56,21 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
   }
 
+  private isExpired(decoded: any | null): boolean {
+    if (!decoded || !decoded.exp) return true;
+    const expMs = Number(decoded.exp) * 1000;
+    return Date.now() >= expMs;
+  }
+
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+    const decoded = this.decodeToken(token);
+    if (!decoded || this.isExpired(decoded)) {
+      this.clearToken();
+      return false;
+    }
+    return true;
   }
 
   logout(): void {
@@ -62,7 +91,7 @@ export class AuthService {
     const token = this.getToken();
     if (!token) return null;
     const decoded = this.decodeToken(token);
-    if (!decoded) return null;
+    if (!decoded || this.isExpired(decoded)) return null;
     return { id: decoded.id, correo: decoded.correo, rol: decoded.rol };
   }
 

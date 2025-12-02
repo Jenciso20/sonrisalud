@@ -3,12 +3,34 @@ import { Cita } from "../models/Cita.js";
 import { Odontologo } from "../models/Odontologo.js";
 import { HorarioOdontologo } from "../models/HorarioOdontologo.js";
 import { Usuario } from "../models/Usuario.js";
+import { formatE164, sendTemplate, sendText } from "../services/whatsapp.service.js";
+import { logger } from "../utils/logger.js";
+import { sequelize } from "../config/db.js";
 
 const ESTADOS_ACTIVOS = ["pendiente", "confirmada"];
+const GAP_MINUTES = Number(process.env.APPOINTMENT_GAP_MINUTES || 10);
+const MIN_HOURS_BEFORE = Number(process.env.MIN_HOURS_BEFORE || 2);
+const MAX_ACTIVE_CITAS_PACIENTE = Number(process.env.MAX_ACTIVE_CITAS_PACIENTE || 3);
+const BLOCK_WEEKENDS = (process.env.BLOCK_WEEKENDS || "true").toLowerCase() === "true";
 
 const toMinutes = (timeString) => {
   const [h, m] = timeString.split(":").map(Number);
   return h * 60 + m;
+};
+
+const parseToUtc = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  // Normaliza a ISO/UTC para guardar y comparar en base de datos
+  return new Date(date.toISOString());
+};
+
+const addMinutes = (date, minutes) => new Date(date.getTime() + minutes * 60 * 1000);
+const durationForOdontologo = (odontologo) =>
+  Number(odontologo?.duracionConsulta) > 0 ? Number(odontologo.duracionConsulta) : 60;
+const isWeekend = (date) => {
+  const d = date.getDay();
+  return d === 0 || d === 6;
 };
 
 export const listarCitasPaciente = async (req, res) => {
@@ -53,7 +75,7 @@ export const listarCitasPaciente = async (req, res) => {
 
     res.json(citas);
   } catch (error) {
-    console.error("Error al listar citas:", error);
+    logger.error("Error al listar citas:", error);
     res.status(500).json({ mensaje: "Error al listar citas" });
   }
 };
@@ -71,18 +93,36 @@ export const crearCita = async (req, res) => {
     if (!odontologo || !odontologo.activo) {
       return res.status(404).json({ mensaje: "Odontologo no encontrado" });
     }
+    const duracion = durationForOdontologo(odontologo);
 
-    const inicioDate = new Date(inicio);
-    if (Number.isNaN(inicioDate.getTime())) {
+    const inicioDate = parseToUtc(inicio);
+    if (!inicioDate) {
       return res.status(400).json({ mensaje: "Fecha de inicio invalida" });
     }
 
-    const now = new Date();
-    if (inicioDate <= now) {
-      return res.status(400).json({ mensaje: "La cita debe programarse a futuro" });
+    if (BLOCK_WEEKENDS && isWeekend(inicioDate)) {
+      return res.status(400).json({ mensaje: "No se permiten citas en fin de semana" });
     }
 
-    const duracion = 60; // citas de 1 hora
+    const now = new Date();
+    const diffHours = (inicioDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (diffHours < MIN_HOURS_BEFORE) {
+      return res
+        .status(400)
+        .json({ mensaje: `La cita debe programarse con al menos ${MIN_HOURS_BEFORE} horas de anticipacion` });
+    }
+
+    const activasPaciente = await Cita.count({
+      where: { pacienteId, estado: { [Op.in]: ESTADOS_ACTIVOS } },
+    });
+    if (activasPaciente >= MAX_ACTIVE_CITAS_PACIENTE) {
+      return res
+        .status(400)
+        .json({
+          mensaje: `Ya tienes ${MAX_ACTIVE_CITAS_PACIENTE} citas activas. Cancela o atiende alguna antes de reservar.`,
+        });
+    }
+
     const finDate = new Date(inicioDate.getTime() + duracion * 60 * 1000);
 
     const diaSemana = inicioDate.getDay();
@@ -107,13 +147,23 @@ export const crearCita = async (req, res) => {
       return res.status(400).json({ mensaje: "El horario seleccionado no esta disponible" });
     }
 
+    // Bloqueo almuerzo 12:00-14:00
+    const lunchStart = 12 * 60;
+    const lunchEnd = 14 * 60;
+    const overlapLunch = !(finMin <= lunchStart || inicioMin >= lunchEnd);
+    if (overlapLunch) {
+      return res
+        .status(400)
+        .json({ mensaje: "No se permiten reservas entre 12:00 y 14:00 (almuerzo)" });
+    }
+
     const choqueOdontologo = await Cita.findOne({
       where: {
         odontologoId,
         estado: { [Op.in]: ESTADOS_ACTIVOS },
         [Op.and]: [
-          { inicio: { [Op.lt]: finDate } },
-          { fin: { [Op.gt]: inicioDate } },
+          { inicio: { [Op.lt]: addMinutes(finDate, GAP_MINUTES) } },
+          { fin: { [Op.gt]: addMinutes(inicioDate, -GAP_MINUTES) } },
         ],
       },
     });
@@ -127,8 +177,8 @@ export const crearCita = async (req, res) => {
         pacienteId,
         estado: { [Op.in]: ESTADOS_ACTIVOS },
         [Op.and]: [
-          { inicio: { [Op.lt]: finDate } },
-          { fin: { [Op.gt]: inicioDate } },
+          { inicio: { [Op.lt]: addMinutes(finDate, GAP_MINUTES) } },
+          { fin: { [Op.gt]: addMinutes(inicioDate, -GAP_MINUTES) } },
         ],
       },
     });
@@ -151,7 +201,7 @@ export const crearCita = async (req, res) => {
 
     res.status(201).json(citaCreada);
   } catch (error) {
-    console.error("Error al crear cita:", error);
+    logger.error("Error al crear cita:", error);
     res.status(500).json({ mensaje: "Error al crear cita" });
   }
 };
@@ -179,7 +229,7 @@ export const cancelarCita = async (req, res) => {
 
     res.json({ mensaje: "Cita cancelada correctamente" });
   } catch (error) {
-    console.error("Error al cancelar cita:", error);
+    logger.error("Error al cancelar cita:", error);
     res.status(500).json({ mensaje: "Error al cancelar cita" });
   }
 };
@@ -211,6 +261,7 @@ export const obtenerDisponibilidad = async (req, res) => {
     const odontologo = await Odontologo.findByPk(odontologoId, {
       include: [{ model: HorarioOdontologo, as: "horarios" }],
     });
+    const duracion = durationForOdontologo(odontologo);
 
     if (!odontologo || !odontologo.activo) {
       return res.status(404).json({ mensaje: "Odontologo no encontrado" });
@@ -252,8 +303,8 @@ export const obtenerDisponibilidad = async (req, res) => {
       },
     });
 
-    const duracion = 60; // citas de 1 hora
     const milisegundosDuracion = duracion * 60 * 1000;
+    const gapMs = GAP_MINUTES * 60 * 1000;
     const ahora = new Date();
 
     const slots = [];
@@ -276,10 +327,18 @@ export const obtenerDisponibilidad = async (req, res) => {
         const hayChoque = citasDelDia.some((cita) => {
           const citaInicio = new Date(cita.inicio);
           const citaFin = new Date(cita.fin);
-          return inicioSlot < citaFin && finSlot > citaInicio;
+          return inicioSlot < new Date(citaFin.getTime() + gapMs) &&
+            finSlot > new Date(citaInicio.getTime() - gapMs);
         });
 
-        if (!hayChoque) {
+        // Bloqueo de almuerzo 12:00-14:00
+        const startMin = inicioSlot.getHours() * 60 + inicioSlot.getMinutes();
+        const endMin = finSlot.getHours() * 60 + finSlot.getMinutes();
+        const lunchStart = 12 * 60;
+        const lunchEnd = 14 * 60;
+        const overlapLunch = !(endMin <= lunchStart || startMin >= lunchEnd);
+
+        if (!hayChoque && !overlapLunch) {
           slots.push({
             inicio: inicioSlot.toISOString(),
             fin: finSlot.toISOString(),
@@ -287,7 +346,8 @@ export const obtenerDisponibilidad = async (req, res) => {
           });
         }
 
-        cursor = new Date(cursor.getTime() + milisegundosDuracion);
+        // avanzar respetando gap
+        cursor = new Date(cursor.getTime() + milisegundosDuracion + gapMs);
       }
     });
 
@@ -295,8 +355,31 @@ export const obtenerDisponibilidad = async (req, res) => {
 
     res.json({ slots, duracion });
   } catch (error) {
-    console.error("Error al obtener disponibilidad:", error);
+    logger.error("Error al obtener disponibilidad:", error);
     res.status(500).json({ mensaje: "Error al obtener disponibilidad" });
+  }
+};
+
+// Listar citas ocupadas (activos) para un odontologo en un dia especifico
+export const citasOcupadasDia = async (req, res) => {
+  const { odontologoId, fecha } = req.query;
+  if (!odontologoId || !fecha) return res.status(400).json({ mensaje: 'Odontologo y fecha son requeridos' });
+  try {
+    const inicioDia = new Date(`${fecha}T00:00:00`);
+    const finDia = new Date(`${fecha}T23:59:59`);
+    const citas = await Cita.findAll({
+      where: {
+        odontologoId,
+        estado: { [Op.in]: ESTADOS_ACTIVOS },
+        inicio: { [Op.between]: [inicioDia, finDia] },
+      },
+      include: [{ model: Odontologo, as: 'odontologo' }, { model: Usuario, as: 'paciente', attributes: ['id','nombre'] }],
+      order: [["inicio", "ASC"]],
+    });
+    res.json(citas.map(c => ({ inicio: c.inicio, fin: c.fin, estado: c.estado, paciente: c.paciente })));
+  } catch (e) {
+    logger.error('Citas ocupadas dia:', e);
+    res.status(500).json({ mensaje: 'Error al listar ocupadas' });
   }
 };
 
@@ -315,20 +398,26 @@ export const reprogramarCita = async (req, res) => {
       return res.status(400).json({ mensaje: "No se puede reprogramar en este estado" });
     }
 
-    const inicioDate = new Date(nuevoInicio);
-    if (Number.isNaN(inicioDate.getTime())) {
+    const inicioDate = parseToUtc(nuevoInicio);
+    if (!inicioDate) {
       return res.status(400).json({ mensaje: "Fecha de inicio invalida" });
     }
     const now = new Date();
-    if (inicioDate <= now) {
-      return res.status(400).json({ mensaje: "La cita debe programarse a futuro" });
+    const diffHours = (inicioDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (diffHours < MIN_HOURS_BEFORE) {
+      return res
+        .status(400)
+        .json({ mensaje: `Debe reprogramarse con al menos ${MIN_HOURS_BEFORE} horas de anticipacion` });
+    }
+    if (BLOCK_WEEKENDS && isWeekend(inicioDate)) {
+      return res.status(400).json({ mensaje: "No se permiten citas en fin de semana" });
     }
 
     const odontologo = await Odontologo.findByPk(cita.odontologoId);
+    const duracion = durationForOdontologo(odontologo);
     if (!odontologo || !odontologo.activo) {
       return res.status(404).json({ mensaje: "Odontologo no encontrado" });
     }
-    const duracion = 60; // citas de 1 hora
     const finDate = new Date(inicioDate.getTime() + duracion * 60 * 1000);
 
     const diaSemana = inicioDate.getDay();
@@ -358,8 +447,8 @@ export const reprogramarCita = async (req, res) => {
         id: { [Op.ne]: cita.id },
         estado: { [Op.in]: ESTADOS_ACTIVOS },
         [Op.and]: [
-          { inicio: { [Op.lt]: finDate } },
-          { fin: { [Op.gt]: inicioDate } },
+          { inicio: { [Op.lt]: addMinutes(finDate, GAP_MINUTES) } },
+          { fin: { [Op.gt]: addMinutes(inicioDate, -GAP_MINUTES) } },
         ],
       },
     });
@@ -374,8 +463,8 @@ export const reprogramarCita = async (req, res) => {
         id: { [Op.ne]: cita.id },
         estado: { [Op.in]: ESTADOS_ACTIVOS },
         [Op.and]: [
-          { inicio: { [Op.lt]: finDate } },
-          { fin: { [Op.gt]: inicioDate } },
+          { inicio: { [Op.lt]: addMinutes(finDate, GAP_MINUTES) } },
+          { fin: { [Op.gt]: addMinutes(inicioDate, -GAP_MINUTES) } },
         ],
       },
     });
@@ -392,7 +481,78 @@ export const reprogramarCita = async (req, res) => {
     });
     res.json(actualizada);
   } catch (error) {
-    console.error("Error al reprogramar cita:", error);
+    logger.error("Error al reprogramar cita:", error);
+    res.status(500).json({ mensaje: "Error al reprogramar cita" });
+  }
+};
+
+// Reprogramar como odontologo o admin (drag&drop)
+export const reprogramarCitaOd = async (req, res) => {
+  const { id } = req.params;
+  const { nuevoInicio } = req.body;
+  try {
+    const cita = await Cita.findByPk(id);
+    if (!cita) return res.status(404).json({ mensaje: "Cita no encontrada" });
+
+    // Si es odontologo, validar pertenencia
+    if (req.usuario?.rol === "odontologo") {
+      const od = await Odontologo.findOne({ where: { userId: req.usuario.id } });
+      if (!od || od.id !== cita.odontologoId) {
+        return res.status(403).json({ mensaje: "No puedes reprogramar esta cita" });
+      }
+    }
+
+    const inicioDate = parseToUtc(nuevoInicio);
+    if (!inicioDate) {
+      return res.status(400).json({ mensaje: "Fecha de inicio invalida" });
+    }
+    if (BLOCK_WEEKENDS && isWeekend(inicioDate)) {
+      return res.status(400).json({ mensaje: "No se permiten citas en fin de semana" });
+    }
+    const now = new Date();
+    const diffHours = (inicioDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (diffHours < MIN_HOURS_BEFORE) {
+      return res
+        .status(400)
+        .json({ mensaje: `Debe reprogramarse con al menos ${MIN_HOURS_BEFORE} horas de anticipacion` });
+    }
+
+    const odontologo = await Odontologo.findByPk(cita.odontologoId);
+    if (!odontologo || !odontologo.activo) {
+      return res.status(404).json({ mensaje: "Odontologo no encontrado" });
+    }
+    const duracion = durationForOdontologo(odontologo);
+    const finDate = new Date(inicioDate.getTime() + duracion * 60 * 1000);
+
+    // choques con otras citas del odontologo
+    const choqueOdontologo = await Cita.findOne({
+      where: {
+        odontologoId: cita.odontologoId,
+        id: { [Op.ne]: cita.id },
+        estado: { [Op.in]: ESTADOS_ACTIVOS },
+        [Op.and]: [
+          { inicio: { [Op.lt]: addMinutes(finDate, GAP_MINUTES) } },
+          { fin: { [Op.gt]: addMinutes(inicioDate, -GAP_MINUTES) } },
+        ],
+      },
+    });
+    if (choqueOdontologo) {
+      return res.status(400).json({ mensaje: "El odontologo ya tiene una cita en ese horario" });
+    }
+
+    cita.inicio = inicioDate;
+    cita.fin = finDate;
+    await cita.save();
+
+    const actualizada = await Cita.findByPk(cita.id, {
+      include: [
+        { model: Odontologo, as: "odontologo" },
+        { model: Usuario, as: "paciente" },
+      ],
+    });
+    res.json(actualizada);
+  } catch (error) {
+    logger.error("Error al reprogramar cita (od):", error);
     res.status(500).json({ mensaje: "Error al reprogramar cita" });
   }
 };
@@ -428,9 +588,61 @@ export const adminListarCitas = async (req, res) => {
 
     res.json(citas);
   } catch (error) {
-    console.error("Admin listar citas:", error);
+    logger.error("Admin listar citas:", error);
     res.status(500).json({ mensaje: "Error al listar citas" });
   }
+};
+
+// ADMIN: enviar recordatorio por WhatsApp (con fallback a email futuro)
+export const adminEnviarRecordatorio = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Configuracion requerida para WhatsApp Cloud API
+    const hasWA = !!(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID);
+    if (!hasWA) {
+      return res
+        .status(501)
+        .json({ mensaje: 'WhatsApp no esta configurado en el servidor', detalle: 'Define WHATSAPP_TOKEN y WHATSAPP_PHONE_ID en .env' });
+    }
+
+    const cita = await Cita.findByPk(id, {
+      include: [
+        { model: Odontologo, as: 'odontologo' },
+        { model: Usuario, as: 'paciente' },
+      ],
+    });
+    if (!cita) return res.status(404).json({ mensaje: 'Cita no encontrada' });
+    const tel = cita.paciente?.telefono;
+    const to = formatE164(tel);
+    if (!to) return res.status(400).json({ mensaje: 'Paciente sin telefono valido' });
+
+    const fecha = new Date(cita.inicio);
+    const fechaStr = fecha.toLocaleString();
+    const odont = cita.odontologo?.nombre || 'Odontologo';
+    const nombre = cita.paciente?.nombre || 'Paciente';
+    const text = `Hola ${nombre}, recordatorio de tu cita odontologica el ${fechaStr} con ${odont}. Si no puedes asistir, por favor cancela con anticipacion.`;
+
+    const templateName = process.env.WHATSAPP_TEMPLATE || '';
+    try {
+      if (templateName) await sendTemplate(to, templateName, 'es');
+      else await sendText(to, text);
+      cita.recordatorioEnviado = true;
+      await cita.save();
+      return res.json({ mensaje: 'Recordatorio enviado', destino: to });
+    } catch (waErr) {
+      logger.error('Error WhatsApp:', waErr?.details || waErr);
+      return res.status(502).json({ mensaje: 'No se pudo enviar por WhatsApp', detalle: waErr?.details || null });
+    }
+  } catch (error) {
+    logger.error('Admin enviar recordatorio:', error);
+    res.status(500).json({ mensaje: 'Error al enviar recordatorio' });
+  }
+};
+
+// ADMIN: capability flag for WhatsApp availability
+export const adminWhatsAppEnabled = async (_req, res) => {
+  const enabled = !!(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID);
+  res.json({ enabled });
 };
 
 // ADMIN: crear cita para cualquier paciente
@@ -457,12 +669,22 @@ export const adminActualizarCita = async (req, res) => {
     if (motivo !== undefined) cita.motivo = motivo;
 
     if (nuevoInicio) {
-      const inicioDate = new Date(nuevoInicio);
-      if (Number.isNaN(inicioDate.getTime())) {
+      const inicioDate = parseToUtc(nuevoInicio);
+      if (!inicioDate) {
         return res.status(400).json({ mensaje: "Fecha de inicio invalida" });
       }
+      if (BLOCK_WEEKENDS && isWeekend(inicioDate)) {
+        return res.status(400).json({ mensaje: "No se permiten citas en fin de semana" });
+      }
+      const now = new Date();
+      const diffHours = (inicioDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+      if (diffHours < MIN_HOURS_BEFORE) {
+        return res
+          .status(400)
+          .json({ mensaje: `Debe reprogramarse con al menos ${MIN_HOURS_BEFORE} horas de anticipacion` });
+      }
       const odontologo = await Odontologo.findByPk(cita.odontologoId);
-      const duracion = 60; // citas de 1 hora
+      const duracion = durationForOdontologo(odontologo);
       const finDate = new Date(inicioDate.getTime() + duracion * 60 * 1000);
 
       // choques
@@ -472,8 +694,8 @@ export const adminActualizarCita = async (req, res) => {
           id: { [Op.ne]: cita.id },
           estado: { [Op.in]: ESTADOS_ACTIVOS },
           [Op.and]: [
-            { inicio: { [Op.lt]: finDate } },
-            { fin: { [Op.gt]: inicioDate } },
+            { inicio: { [Op.lt]: addMinutes(finDate, GAP_MINUTES) } },
+            { fin: { [Op.gt]: addMinutes(inicioDate, -GAP_MINUTES) } },
           ],
         },
       });
@@ -492,7 +714,7 @@ export const adminActualizarCita = async (req, res) => {
     });
     res.json(conRelaciones);
   } catch (error) {
-    console.error("Admin actualizar cita:", error);
+    logger.error("Admin actualizar cita:", error);
     res.status(500).json({ mensaje: "Error al actualizar cita" });
   }
 };
@@ -510,7 +732,7 @@ export const adminCancelarCita = async (req, res) => {
     await cita.save();
     res.json({ mensaje: "Cita cancelada correctamente" });
   } catch (error) {
-    console.error("Admin cancelar cita:", error);
+    logger.error("Admin cancelar cita:", error);
     res.status(500).json({ mensaje: "Error al cancelar cita" });
   }
 };

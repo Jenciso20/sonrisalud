@@ -1,0 +1,22 @@
+.perfil { max-width: 860px; margin: 24px auto; padding: 0 16px 48px; display: flex; flex-direction: column; gap: 16px; }
+.perfil__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.kicker { margin: 0; color: #6c5ce7; font-weight: 700; letter-spacing: 0.5px; }
+.perfil__header h1 { margin: 2px 0 4px; color: #0a3d62; }
+.sub { margin: 0; color: #636e72; }
+.back { text-decoration: none; color: #0984e3; font-weight: 700; }
+.card { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 10px 24px rgba(10,61,98,0.12); }
+.estado { margin-bottom: 8px; padding: 10px 12px; border-radius: 10px; }
+.estado.ok { background: #dff9fb; color: #218c74; }
+.estado.error { background: #ffeaa7; color: #d63031; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.grid--3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.campo { display: flex; flex-direction: column; gap: 4px; font-weight: 600; color: #2d3436; }
+.campo input { padding: 10px; border: 1px solid #dfe6e9; border-radius: 10px; font-size: 14px; }
+.campo input:disabled { background: #f1f2f6; color: #636e72; }
+.pass-block { margin-top: 14px; }
+.pass-block h3 { margin: 0 0 8px; color: #0a3d62; }
+.hint { margin: 6px 0 0; color: #636e72; font-size: 13px; }
+.actions { margin-top: 16px; display: flex; gap: 10px; }
+.btn { border: none; border-radius: 10px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+.btn.primary { background: #0984e3; color: #fff; }
+.btn.ghost { background: #ecf0f1; color: #2d3436; }

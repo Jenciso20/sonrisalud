@@ -13,8 +13,10 @@ import { AuthService } from '../../services/auth.service';
 })
 export class LoginComponent implements OnInit {
   // Si quieres ocultar el registro y mostrar solo login, deja esto en false
-  allowRegister = false;
+  allowRegister = true;
   isLogin = true;
+  // Define window.__sonriSaludInstitutionDomain = '@unajma.edu.pe' para forzar dominio; si es null, permite cualquier correo.
+  requiredDomain: string | null = (window as any).__sonriSaludInstitutionDomain || null;
 
   nombre = '';
   apellidos = '';
@@ -43,13 +45,24 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/menu';
-    // Forzar vista de inicio de sesion solamente
-    this.allowRegister = false;
+    // Permitir registro desde la misma pantalla
+    this.allowRegister = true;
     this.isLogin = true;
 
     if (this.authService.isAuthenticated()) {
       this.router.navigate([this.returnUrl]);
     }
+  }
+
+  goRegister(): void {
+    if (!this.allowRegister) return;
+    this.resetAlerts();
+    this.isLogin = false;
+  }
+
+  goLogin(): void {
+    this.resetAlerts();
+    this.isLogin = true;
   }
 
   onLogin() {
@@ -71,21 +84,22 @@ export class LoginComponent implements OnInit {
             : this.returnUrl || '/menu';
           this.router.navigate([dest]);
         }
+        this.isSubmitting = false;
       },
       error: (err) => {
         this.errorMsg = err?.error?.mensaje || 'Error al iniciar sesion.';
-      },
-      complete: () => {
         this.isSubmitting = false;
-      }
+      },
+      complete: () => {}
     });
   }
 
   onRegister() {
     this.resetAlerts();
 
-    if (!this.correo.toLowerCase().endsWith('@unajma.edu.pe')) {
-      this.errorMsg = 'Usa tu correo institucional @unajma.edu.pe';
+    const correoLower = (this.correo || '').toLowerCase();
+    if (this.requiredDomain && !correoLower.endsWith(this.requiredDomain)) {
+      this.errorMsg = `Usa tu correo institucional ${this.requiredDomain}`;
       return;
     }
 
@@ -96,7 +110,8 @@ export class LoginComponent implements OnInit {
 
     this.isSubmitting = true;
     const payload = {
-      nombre: (this.nombre + ' ' + this.apellidos).trim(),
+      nombre: (this.nombre || '').trim(),
+      apellidos: (this.apellidos || '').trim() || undefined,
       correo: this.correo,
       password: this.password,
       telefono: this.telefono || undefined,
@@ -109,13 +124,13 @@ export class LoginComponent implements OnInit {
         this.successMsg = res.mensaje || 'Cuenta creada correctamente. Ahora puedes iniciar sesion.';
         this.isLogin = true;
         this.clearForm();
+        this.isSubmitting = false;
       },
       error: (err) => {
         this.errorMsg = err?.error?.mensaje || 'Error al crear la cuenta.';
-      },
-      complete: () => {
         this.isSubmitting = false;
-      }
+      },
+      complete: () => {}
     });
   }
 
@@ -160,13 +175,13 @@ export class LoginComponent implements OnInit {
     this.authService.recoverPassword(this.recoverEmail).subscribe({
       next: (res: any) => {
         this.recoverMessage = res.mensaje || 'Si el correo existe recibiras un mensaje con instrucciones.';
+        this.isRecovering = false;
       },
       error: (err) => {
         this.recoverMessage = err?.error?.mensaje || 'No se pudo enviar el correo de recuperacion.';
-      },
-      complete: () => {
         this.isRecovering = false;
-      }
+      },
+      complete: () => {}
     });
   }
 

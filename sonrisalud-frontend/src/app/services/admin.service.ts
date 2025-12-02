@@ -49,6 +49,14 @@ export class AdminService {
     return this.http.patch(`${this.apiBase}/admin/citas/${id}/cancelar`, {});
   }
 
+  enviarRecordatorioCita(id: number): Observable<any> {
+    return this.http.post(`${this.apiBase}/admin/citas/${id}/recordatorio`, {});
+  }
+
+  whatsappEnabled(): Observable<{ enabled: boolean }> {
+    return this.http.get<{ enabled: boolean }>(`${this.apiBase}/admin/whatsapp/enabled`);
+  }
+
   obtenerDisponibilidad(odontologoId: number, fecha: string): Observable<{
     slots: { inicio: string; fin: string; etiqueta: string }[];
     duracion: number;
@@ -67,6 +75,10 @@ export class AdminService {
 
   actualizarRolUsuario(id: number, rol: string): Observable<any> {
     return this.http.patch(`${this.apiBase}/admin/usuarios/${id}/rol`, { rol });
+  }
+
+  eliminarUsuario(id: number): Observable<any> {
+    return this.http.delete(`${this.apiBase}/admin/usuarios/${id}`);
   }
 
   actualizarOdontologo(id: number, data: { nombre?: string; correo?: string; especialidad?: string; telefono?: string; duracionConsulta?: number; activo?: boolean; }): Observable<any> {

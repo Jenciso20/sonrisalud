@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: sonrisalud-db
+    environment:
+      POSTGRES_DB: sonrisalud
+      POSTGRES_USER: sonri
+      POSTGRES_PASSWORD: sonri_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./sonrisalud-backend
+    container_name: sonrisalud-backend
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_NAME: sonrisalud
+      DB_USER: sonri
+      DB_PASSWORD: sonri_pass
+      DB_SSL: "false"
+      # Opcional: inicializar admin
+      # ADMIN_EMAIL: admin@example.com
+      # ADMIN_PASSWORD: CambiaEstaClave
+      # ADMIN_NOMBRE: Administrador
+      # DB_SYNC_ALTER: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./sonrisalud-frontend
+    container_name: sonrisalud-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
+

@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { logger } from "../utils/logger.js";
 
 export const requireAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -18,7 +19,7 @@ export const requireAuth = (req, res, next) => {
     req.usuario = decoded;
     next();
   } catch (error) {
-    console.error("Token invalido:", error.message);
+    logger.warn("Token invalido:", error.message);
     return res.status(401).json({ mensaje: "Token invalido o expirado" });
   }
 };

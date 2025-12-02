@@ -1,10 +1,14 @@
 # SonriSalud
 
-Aplicación full‑stack para gestión odontológica (pacientes, odontólogos y admin).
+Aplicacion full-stack para gestion odontologica (pacientes, odontologos y administradores).
 
 - Backend: Node.js + Express 5 + Sequelize (PostgreSQL)
 - Frontend: Angular 18 (standalone components)
-- Autenticación: JWT
+- Autenticacion: JWT con rate limiting y CORS configurables
+- Agenda: vista semanal con drag & drop, filtros por estado/paciente y badges de hoy/mañana
+- Citas: duracion dinamica por odontologo + gap configurable entre citas (APPOINTMENT_GAP_MINUTES)
+- Validaciones: password fuerte (8+ con mayus/minus/digito), DNI Peru (8 digitos), celular Peru (9 digitos iniciando en 9), limite de citas activas por paciente y bloqueo de fines de semana/anticipacion minima
+- Recordatorios: job opcional con WhatsApp/email y adjunto .ics X horas antes de la cita
 
 ## Requisitos
 - Node.js 18+
@@ -17,77 +21,75 @@ sonrisalud-backend/   # API REST (Express + Sequelize)
 sonrisalud-frontend/  # SPA Angular
 ```
 
-## Backend – Configuración
-1. Variables de entorno: `sonrisalud-backend/.env`
-   - Ejemplo (ya incluido localmente):
-     ```env
-     PORT=3000
-     DB_NAME=sonrisalud
-     DB_USER=postgres
-     DB_PASSWORD=***
-     DB_HOST=localhost
-     DB_SYNC_ALTER=false
-     JWT_SECRET=clave_secreta
-     FRONTEND_URL=http://localhost:4200
-     EMAIL_HOST=smtp.gmail.com
-     EMAIL_PORT=587
-     EMAIL_SECURE=false
-     EMAIL_USER=tu_correo@gmail.com
-     EMAIL_PASS=tu_contrasena_de_aplicacion
-     ADMIN_EMAIL=admin@local.test
-     ADMIN_PASSWORD=Admin123!
-     ADMIN_NOMBRE=Administrador
-     ```
-
+## Backend - Configuracion
+1. Variables de entorno: copia `sonrisalud-backend/.env.example` a `.env` y ajusta credenciales.
 2. Instalar dependencias y arrancar:
    ```bash
    cd sonrisalud-backend
    npm install
    npm start
    ```
-
-3. Crear/Promover admin (opción manual por CLI):
+3. Migraciones SQL (evita solapes de citas con constraint GIST):
+   ```bash
+   npm run migrate
+   ```
+4. Crear/promover admin:
    ```bash
    npm run seed:admin
    ```
-   - Usa `ADMIN_EMAIL` y `ADMIN_PASSWORD` del `.env`. Si existe el correo, lo promueve a admin y actualiza clave.
+   Usa `ADMIN_EMAIL` y `ADMIN_PASSWORD` del `.env`. Si existe, lo promueve a admin y actualiza clave.
+
+### Variables clave
+- `CORS_ORIGINS` (lista separada por comas) controla origenes permitidos. Si queda vacio, acepta todos.
+- `RATE_LIMIT_WINDOW_MS` y `RATE_LIMIT_MAX` limitan intentos en rutas de auth.
+- `INSTITUTION_DOMAIN` fuerza el dominio de correo en el registro (por defecto `@unajma.edu.pe`).
+- `WHATSAPP_*` habilita recordatorios via WhatsApp Cloud API (opcional).
+- `APPOINTMENT_GAP_MINUTES` define el buffer entre citas.
+- `MAX_ACTIVE_CITAS_PACIENTE` limita citas activas por paciente, `MIN_HOURS_BEFORE` define anticipacion minima para crear/reprogramar y `BLOCK_WEEKENDS` bloquea fines de semana si es true.
+- Recordatorios automaticos (opcionales):
+  - `REMINDER_ENABLED=true`
+  - `REMINDER_HOURS_BEFORE=24` (horas antes para enviar)
+  - `REMINDER_INTERVAL_MS=300000` (cada cuanto corre el job)
 
 ### Endpoints principales
 - Auth: `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/recover`, `POST /api/auth/reset-password`
 - Paciente (autenticado):
   - Citas: `GET /api/citas`, `POST /api/citas`, `PATCH /api/citas/:id/cancelar`, `PATCH /api/citas/:id/reprogramar`
   - Disponibilidad: `GET /api/citas/disponibilidad?odontologoId&fecha`
-- Admin (require rol=admin):
+- Admin (rol=admin):
   - Pacientes: `GET /api/admin/pacientes`, `PATCH /api/admin/pacientes/:id`, `DELETE /api/admin/pacientes/:id`
-  - Odontólogos: `PATCH /api/admin/odontologos/:id`, `DELETE /api/admin/odontologos/:id`
+  - Odontologos: `PATCH /api/admin/odontologos/:id`, `DELETE /api/admin/odontologos/:id`
   - Citas: `GET /api/admin/citas`, `POST /api/admin/citas`, `PATCH /api/admin/citas/:id`, `PATCH /api/admin/citas/:id/cancelar`
   - Usuarios/Roles: `GET /api/admin/usuarios`, `PATCH /api/admin/usuarios/:id/rol`
 
-## Frontend – Configuración
+## Frontend - Configuracion
 1. Instalar y arrancar:
    ```bash
    cd sonrisalud-frontend
    npm install
    npm run start   # http://localhost:4200
    ```
+2. El frontend apunta a `http://localhost:3000/api` por defecto. Interceptor JWT adjunta `Authorization: Bearer <token>` en cada request.
 
-2. Notas
-- El frontend busca el backend en `http://localhost:3000` por defecto.
-- Interceptor de JWT adjunta `Authorization: Bearer <token>` en cada request.
-- Menú lateral aparece una vez autenticado; opciones se muestran según rol del usuario.
-
-## Flujo rápido de uso
-1. Crear admin: `npm run seed:admin` en backend.
-2. Iniciar sesión en frontend con el admin.
-3. En Administrador: gestionar usuarios (roles), pacientes, odontólogos y citas.
+## Flujo rapido de uso
+1. Ejecuta migraciones y crea admin (`npm run migrate` y `npm run seed:admin` en backend).
+2. Inicia sesion en el frontend con el admin.
+3. En Administrador: gestiona usuarios (roles), pacientes, odontologos y citas.
 4. En Pacientes: reservar, cancelar y reprogramar citas.
+5. En Odontologos: agenda semanal con drag&drop para reprogramar, filtros por estado/paciente y badges de hoy/mañana.
+
+## Calidad y pruebas
+- Backend: `npm test` ejecuta pruebas ligeras de validacion (Node test runner).
+- Constraint de solape: migracion `001_avoid_overlap.sql` agrega exclusion GIST para evitar citas traslapadas por odontologo en estados activos.
 
 ## Problemas comunes
-- Build Angular falla por presupuesto de CSS (Google Fonts inline): ajustar budgets en `angular.json` o remover fuente inline.
-- Error DB en arranque por `sync alter`: asegurar `DB_SYNC_ALTER=false` en producción y usar migraciones al escalar.
-- Zona horaria: los horarios usan time local del servidor; para producción se recomienda normalizar a UTC.
+- Build Angular falla por presupuesto de CSS: ajustar budgets en `angular.json` o reducir estilos globales.
+- Error DB por `sync alter`: dejar `DB_SYNC_ALTER=false` en produccion y usar `npm run migrate`.
+- Zona horaria: las fechas se normalizan con UTC al guardarse; enviar siempre ISO con zona para evitar desfases.
+- Recordatorios: requieren `REMINDER_ENABLED=true` y correo/WhatsApp configurados; el adjunto .ics se envia por email como fallback si falla WhatsApp.
+- Validaciones: password con mayus/minus/digito (8+), DNI 8 digitos, celular peruano 9 digitos (empieza en 9), max citas activas por paciente y sin fines de semana/anticipacion minima.
 
-## Git – Flujo básico
+## Git - Flujo basico
 - Commit habitual:
   ```bash
   git add -A
@@ -99,14 +101,3 @@ sonrisalud-frontend/  # SPA Angular
   git checkout -b develop
   git push -u origin develop
   ```
-
-## Roadmap sugerido
-- Migraciones (sequelize-cli/umzug) y seeds formales.
-- Reagendar drag&drop (agenda semanal odontólogo).
-- Catálogo de servicios (nombre, duración, precio) y reportería.
-- Recordatorios automáticos (BullMQ/Redis) + adjunto .ics.
-- Validación de entrada con Zod/Joi + rate limiting + CORS por entorno.
-
----
-Para dudas puntuales (login/registro/roles), revisa la consola del backend: los mensajes de error ahí ayudan a diagnosticar rápido.
-
