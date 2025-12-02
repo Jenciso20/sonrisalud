@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "sonrisalud-frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist/sonrisalud-frontend" }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/sonrisalud-frontend/dist/sonrisalud-frontend/$1"
+    }
+  ]
+}
