@@ -1,8 +1,16 @@
 {
   "version": 2,
-  "framework": "angular",
-  "buildCommand": "cd sonrisalud-frontend && npm install && npm run build",
-  "outputDirectory": "sonrisalud-frontend/dist/sonrisalud-frontend",
+  "builds": [
+    {
+      "src": "sonrisalud-frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist/sonrisalud-frontend",
+        "installCommand": "npm install",
+        "buildCommand": "npm run build"
+      }
+    }
+  ],
   "routes": [
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
