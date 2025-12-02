@@ -1,6 +1,6 @@
 {
   "build": {
-    "command": "ng build --prod",
-    "outputDirectory": "dist/tu-proyecto"
+    "command": "npx ng build --prod",
+    "outputDirectory": "dist/sonrisalud-frontend"
   }
 }
