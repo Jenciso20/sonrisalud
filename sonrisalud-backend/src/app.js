@@ -31,7 +31,7 @@ const corsOptions = {
 };
 
 if (allowedOrigins.length > 0) {
-  logger.info(Orígenes CORS permitidos: ${allowedOrigins.join(", ")});
+  logger.info(`Orígenes CORS permitidos: ${allowedOrigins.join(", ")}`);
 } else {
   logger.warn("No se han configurado orígenes para CORS. Se permitirá cualquier origen.");
 }
@@ -87,7 +87,7 @@ const startServer = async () => {
           existente.password = hashed;
           existente.rol = "admin";
           await existente.save();
-          logger.info(Usuario existente promovido a admin: ${adminEmail});
+          logger.info(`Usuario existente promovido a admin: ${adminEmail}`);
         } else {
           await Usuario.create({
             nombre: adminNombre,
@@ -95,7 +95,7 @@ const startServer = async () => {
             password: hashed,
             rol: "admin",
           });
-          logger.info(Admin inicial creado: ${adminEmail});
+          logger.info(`Admin inicial creado: ${adminEmail}`);
         }
       } else {
         logger.warn("No hay ADMIN_EMAIL/ADMIN_PASSWORD definidos; crea un admin manualmente.");
@@ -103,7 +103,7 @@ const startServer = async () => {
     }
 
     app.listen(PORT, () => {
-      logger.info(Servidor corriendo en http://localhost:${PORT});
+      logger.info(`Servidor corriendo en http://localhost:${PORT}`);
       startReminderJob();
     });
   } catch (error) {
