@@ -39,8 +39,9 @@ const corsOptions = {
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept", "Origin"],
+  optionsSuccessStatus: 204,
 };
 
 if (allowedOrigins.length > 0) {
@@ -49,6 +50,7 @@ if (allowedOrigins.length > 0) {
   logger.warn("No se han configurado orígenes para CORS. Se permitirá cualquier origen.");
 }
 
+app.options("*", cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(requestLogger);
