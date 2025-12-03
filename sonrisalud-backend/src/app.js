@@ -53,7 +53,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(requestLogger);
 
-// Health check route, 
+// Health check route, útil para despliegues y monitoreo
 app.get("/", (req, res) => {
   res.json({
     mensaje: "Backend running",
