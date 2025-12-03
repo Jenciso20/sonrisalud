@@ -1,10 +1,10 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OdontologosService } from '../../services/odontologos.service';
 import { AuthService } from '../../services/auth.service';
-import { environment } from '../../../environments/environment';
+import { CitasService } from '../../services/citas.service';
 
 interface Cita {
   id: number;
@@ -38,7 +38,7 @@ export class OdontologosComponent {
   filterEstado: string | null = null;
   filterPacienteId: number | null = null;
 
-  // Atención
+  // AtenciÃ³n
   sel: Cita | null = null;
   diagnostico = '';
   tratamiento = '';
@@ -68,7 +68,12 @@ export class OdontologosComponent {
       .sort((a, b) => new Date(a.inicio).getTime() - new Date(b.inicio).getTime());
   }
 
-  constructor(private odService: OdontologosService, private auth: AuthService, private route: ActivatedRoute) {}
+  constructor(
+    private odService: OdontologosService,
+    private auth: AuthService,
+    private route: ActivatedRoute,
+    private citasService: CitasService,
+  ) {}
 
   ngOnInit(): void {
     this.cargarOdontologoYBuscar();
@@ -241,33 +246,24 @@ export class OdontologosComponent {
     this.resBuscando = true;
     this.odService
       .agenda(this.odontologoId, this.resFecha + 'T00:00:00', this.resFecha + 'T23:59:59')
-      .subscribe({ next: () => {}, error: () => {} }); // no usado aquí
-    // Reutilizamos endpoint general de disponibilidad
-    const urlBase = environment.apiBaseUrl;
-    fetch(`${urlBase}/citas/disponibilidad?odontologoId=${this.odontologoId}&fecha=${this.resFecha}`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('sonrisalud_token')}` }
-    }).then(r => r.json()).then((r) => {
-      this.resSlots = r?.slots || [];
-      this.resDuracion = r?.duracion || 30;
-      this.resBuscando = false;
-      if (!this.resSlots.length) this.error = 'Sin horarios disponibles para ese día';
-    }).catch(() => { this.error = 'Error al obtener disponibilidad'; this.resBuscando = false; });
-  }
-
-  seleccionarResSlot(s: { inicio: string; fin: string; etiqueta: string }): void { this.resSlotSel = s; }
-
-  crearCitaComoOd(): void {
-    if (!this.pacienteId || !this.resSlotSel) { this.error = 'Selecciona paciente y horario'; return; }
-    this.resGuardando = true; this.error = '';
-    this.odService.crearCitaComoOdontologo({ pacienteId: this.pacienteId, inicio: this.resSlotSel.inicio, motivo: this.resMotivo || undefined, odontologoId: this.odontologoId || undefined }).subscribe({
-      next: () => { this.resGuardando = false; this.resMotivo = ''; this.resSlotSel = null; this.resSlots = []; this.buscar(); },
-      error: (err) => { this.error = err?.error?.mensaje || 'No se pudo crear la cita'; this.resGuardando = false; }
+      .subscribe({ next: () => {}, error: () => {} }); // no usado aquÃ­
+        this.citasService.obtenerDisponibilidad(this.odontologoId, this.resFecha).subscribe({
+      next: (r) => {
+        this.resSlots = r?.slots || [];
+        this.resDuracion = r?.duracion || 30;
+        this.resBuscando = false;
+        if (!this.resSlots.length) this.error = 'Sin horarios disponibles para ese día';
+      },
+      error: (err) => {
+        this.error = err?.error?.mensaje || 'Error al obtener disponibilidad';
+        this.resBuscando = false;
+      }
     });
   }
 
   cancelarOd(c: any): void {
     if (!c?.id) return;
-    if (!confirm('¿Cancelar esta cita?')) return;
+    if (!confirm('Â¿Cancelar esta cita?')) return;
     this.odService.cancelarCitaComoOdontologo(c.id).subscribe({
       next: () => { this.buscar(); },
       error: (err) => { this.error = err?.error?.mensaje || 'No se pudo cancelar la cita'; }
@@ -323,4 +319,7 @@ export class OdontologosComponent {
     });
   }
 }
+
+
+
 
