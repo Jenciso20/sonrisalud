@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:3000/api'
+  // Para desarrollo apuntamos al backend desplegado en la nube para evitar errores de conexión local.
+  apiBaseUrl: 'https://sonrisalud-1xc4.vercel.app/api'
 };
