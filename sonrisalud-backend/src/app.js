@@ -87,6 +87,7 @@ const shouldAlter = (process.env.DB_SYNC_ALTER || "").toLowerCase() === "true";
 const syncOptions = shouldAlter ? { alter: true } : {};
 
 // Función para iniciar el servidor localmente
+// Función para iniciar el servidor localmente
 const startServer = async () => {
   try {
     await sequelize.authenticate(); // Verificar conexión primero
