@@ -31,7 +31,7 @@ const corsOptions = {
 };
 
 if (allowedOrigins.length > 0) {
-  logger.info(`Orígenes CORS permitidos: ${allowedOrigins.join(", ")}`);
+  logger.info(Orígenes CORS permitidos: ${allowedOrigins.join(", ")});
 } else {
   logger.warn("No se han configurado orígenes para CORS. Se permitirá cualquier origen.");
 }
@@ -64,50 +64,56 @@ const PORT = process.env.PORT || 3000;
 const shouldAlter = (process.env.DB_SYNC_ALTER || "").toLowerCase() === "true";
 const syncOptions = shouldAlter ? { alter: true } : {};
 
-sequelize
-  .sync(syncOptions)
-  .then(() => {
+// Función para iniciar el servidor localmente
+const startServer = async () => {
+  try {
+    await sequelize.sync(syncOptions);
     logger.info("Base de datos sincronizada correctamente.");
+
     // Aplicar migraciones ligeras (ADD COLUMN IF NOT EXISTS)
-    (async () => {
-      await runMigrations();
-      // Bootstrap primer admin si no existe
-      try {
-        const admins = await Usuario.count({ where: { rol: "admin" } });
-        if (admins === 0) {
-          const adminEmail = process.env.ADMIN_EMAIL;
-          const adminPassword = process.env.ADMIN_PASSWORD;
-          const adminNombre = process.env.ADMIN_NOMBRE || "Administrador";
-          if (adminEmail && adminPassword) {
-            const hashed = await bcrypt.hash(adminPassword, 10);
-            // Si ya existe un usuario con ese correo, lo promovemos a admin y actualizamos password
-            const existente = await Usuario.findOne({ where: { correo: adminEmail } });
-            if (existente) {
-              existente.nombre = adminNombre;
-              existente.password = hashed;
-              existente.rol = "admin";
-              await existente.save();
-              logger.info(`Usuario existente promovido a admin: ${adminEmail}`);
-            } else {
-              await Usuario.create({
-                nombre: adminNombre,
-                correo: adminEmail,
-                password: hashed,
-                rol: "admin",
-              });
-              logger.info(`Admin inicial creado: ${adminEmail}`);
-            }
-          } else {
-            logger.warn("No hay ADMIN_EMAIL/ADMIN_PASSWORD definidos; crea un admin manualmente.");
-          }
+    await runMigrations();
+
+    // Bootstrap primer admin si no existe
+    const admins = await Usuario.count({ where: { rol: "admin" } });
+    if (admins === 0) {
+      const adminEmail = process.env.ADMIN_EMAIL;
+      const adminPassword = process.env.ADMIN_PASSWORD;
+      const adminNombre = process.env.ADMIN_NOMBRE || "Administrador";
+      if (adminEmail && adminPassword) {
+        const hashed = await bcrypt.hash(adminPassword, 10);
+        const existente = await Usuario.findOne({ where: { correo: adminEmail } });
+        if (existente) {
+          existente.nombre = adminNombre;
+          existente.password = hashed;
+          existente.rol = "admin";
+          await existente.save();
+          logger.info(Usuario existente promovido a admin: ${adminEmail});
+        } else {
+          await Usuario.create({
+            nombre: adminNombre,
+            correo: adminEmail,
+            password: hashed,
+            rol: "admin",
+          });
+          logger.info(Admin inicial creado: ${adminEmail});
         }
-      } catch (e) {
-        logger.error("Error al crear admin inicial:", e);
+      } else {
+        logger.warn("No hay ADMIN_EMAIL/ADMIN_PASSWORD definidos; crea un admin manualmente.");
       }
-    })();
+    }
+
     app.listen(PORT, () => {
-      logger.info(`Servidor corriendo en http://localhost:${PORT}`);
+      logger.info(Servidor corriendo en http://localhost:${PORT});
       startReminderJob();
     });
-  })
-  .catch((error) => logger.error("Error al conectar con la base de datos:", error));
+  } catch (error) {
+    logger.error("Error al conectar con la base de datos:", error);
+  }
+};
+
+// Si no estamos en producción (o si se ejecuta directamente), iniciamos el servidor
+if (process.env.NODE_ENV !== "production") {
+  startServer();
+}
+
+export default app;
