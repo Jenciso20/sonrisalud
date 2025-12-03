@@ -1,7 +1,16 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
-// Cargar variables de entorno
+import * as pgModule from "pg";
+
 dotenv.config();
+
+const pg = pgModule.default || pgModule;
+
+if (!pg) {
+  console.error("CRITICAL ERROR: 'pg' module failed to load!");
+} else {
+  console.log("PG Module loaded successfully:", typeof pg);
+}
 
 export const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -11,6 +20,7 @@ export const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
     dialect: "postgres",
+    dialectModule: pg,
     logging: false,
     dialectOptions:
       process.env.NODE_ENV === "production"

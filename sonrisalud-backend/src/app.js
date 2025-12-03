@@ -64,6 +64,48 @@ app.get("/", (req, res) => {
   });
 });
 
+// Endpoint temporal para inicializar la BD en Vercel (Seed)
+app.get("/api/seed-admin", async (req, res) => {
+  try {
+    await sequelize.sync(syncOptions);
+    await runMigrations();
+
+    const admins = await Usuario.count({ where: { rol: "admin" } });
+    if (admins === 0) {
+      const adminEmail = process.env.ADMIN_EMAIL;
+      const adminPassword = process.env.ADMIN_PASSWORD;
+      const adminNombre = process.env.ADMIN_NOMBRE || "Administrador";
+
+      if (adminEmail && adminPassword) {
+        const hashed = await bcrypt.hash(adminPassword, 10);
+        const existente = await Usuario.findOne({ where: { correo: adminEmail } });
+
+        if (existente) {
+          existente.nombre = adminNombre;
+          existente.password = hashed;
+          existente.rol = "admin";
+          await existente.save();
+          return res.json({ message: `Usuario existente promovido a admin: ${adminEmail}` });
+        } else {
+          await Usuario.create({
+            nombre: adminNombre,
+            correo: adminEmail,
+            password: hashed,
+            rol: "admin",
+          });
+          return res.json({ message: `Admin inicial creado: ${adminEmail}` });
+        }
+      } else {
+        return res.status(400).json({ message: "Faltan variables de entorno ADMIN_EMAIL / ADMIN_PASSWORD" });
+      }
+    }
+    return res.json({ message: "El administrador ya existe" });
+  } catch (error) {
+    logger.error("Error en seed-admin:", error);
+    res.status(500).json({ message: "Error interno al crear admin", error: error.message });
+  }
+});
+
 // Rate limit solo para rutas sensibles (auth y recuperación)
 const authLimiter = rateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
