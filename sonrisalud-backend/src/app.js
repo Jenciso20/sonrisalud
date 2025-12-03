@@ -30,6 +30,12 @@ const corsOptions = {
   credentials: true,
 };
 
+if (allowedOrigins.length > 0) {
+  logger.info(`Orígenes CORS permitidos: ${allowedOrigins.join(", ")}`);
+} else {
+  logger.warn("No se han configurado orígenes para CORS. Se permitirá cualquier origen.");
+}
+
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(requestLogger);
