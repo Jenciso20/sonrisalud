@@ -22,12 +22,25 @@ const allowedOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || 
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+
 const corsOptions = {
-  origin: allowedOrigins.length === 0 ? true : (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error("Origen no permitido por CORS"));
+  origin: (origin, callback) => {
+    // Permitir requests sin origen (como Postman o server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Si no hay orígenes definidos, permitir todos (modo desarrollo/debug)
+    if (allowedOrigins.length === 0) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      logger.warn(`Origen bloqueado por CORS: ${origin}`);
+      return callback(new Error("Origen no permitido por CORS"));
+    }
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 if (allowedOrigins.length > 0) {
@@ -39,6 +52,15 @@ if (allowedOrigins.length > 0) {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(requestLogger);
+
+// Health check route
+app.get("/", (req, res) => {
+  res.json({
+    mensaje: "Backend running",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+  });
+});
 
 // Rate limit solo para rutas sensibles (auth y recuperación)
 const authLimiter = rateLimit({
@@ -55,7 +77,7 @@ app.use("/api/admin", adminRoutes);
 app.use((err, _req, res, _next) => {
   logger.error("Error no controlado", err);
   if (err?.message?.includes("CORS")) {
-    return res.status(401).json({ mensaje: "Origen no permitido" });
+    return res.status(401).json({ mensaje: "Origen no permitido por CORS" });
   }
   return res.status(500).json({ mensaje: "Error interno del servidor" });
 });
@@ -67,6 +89,9 @@ const syncOptions = shouldAlter ? { alter: true } : {};
 // Función para iniciar el servidor localmente
 const startServer = async () => {
   try {
+    await sequelize.authenticate(); // Verificar conexión primero
+    logger.info("Conexión a base de datos establecida.");
+
     await sequelize.sync(syncOptions);
     logger.info("Base de datos sincronizada correctamente.");
 
@@ -107,12 +132,14 @@ const startServer = async () => {
       startReminderJob();
     });
   } catch (error) {
-    logger.error("Error al conectar con la base de datos:", error);
+    logger.error("Error al iniciar el servidor:", error);
   }
 };
 
-// Si no estamos en producción (o si se ejecuta directamente), iniciamos el servidor
-if (process.env.NODE_ENV !== "production") {
+// Solo iniciar el servidor si se ejecuta directamente (no importado)
+// y si NO estamos en un entorno serverless que exporta la app (como Vercel)
+// Vercel setea process.env.VERCEL = "1"
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   startServer();
 }
 
