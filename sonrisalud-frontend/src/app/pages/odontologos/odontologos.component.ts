@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OdontologosService } from '../../services/odontologos.service';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 interface Cita {
   id: number;
@@ -242,7 +243,7 @@ export class OdontologosComponent {
       .agenda(this.odontologoId, this.resFecha + 'T00:00:00', this.resFecha + 'T23:59:59')
       .subscribe({ next: () => {}, error: () => {} }); // no usado aquí
     // Reutilizamos endpoint general de disponibilidad
-    const urlBase = (window as any).__sonriSaludApiBaseUrl || 'http://localhost:3000/api';
+    const urlBase = environment.apiBaseUrl;
     fetch(`${urlBase}/citas/disponibilidad?odontologoId=${this.odontologoId}&fecha=${this.resFecha}`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('sonrisalud_token')}` }
     }).then(r => r.json()).then((r) => {
