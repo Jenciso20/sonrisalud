@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiUrl =
-    (window as any).__sonriSaludApiUrl || 'http://localhost:3000/api/auth';
+  private readonly apiUrl = `${environment.apiBaseUrl}/auth`;
   private readonly tokenKey = 'sonrisalud_token';
 
   constructor(private http: HttpClient) {}
