@@ -8,6 +8,7 @@ import { AdministradorComponent } from './pages/administrador/administrador.comp
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
 import { PerfilComponent } from './pages/perfil/perfil.component';
+import { FiltrosComponent } from './pages/filtros/filtros.component';
 
 export const routes: Routes = [
   { path: '', component: LoginComponent },
@@ -16,7 +17,7 @@ export const routes: Routes = [
   { path: 'perfil', component: PerfilComponent, canActivate: [authGuard] },
   { path: 'pacientes', component: PacientesComponent, canActivate: [roleGuard], data: { roles: ['paciente','admin'] } },
   { path: 'odontologos', component: OdontologosComponent, canActivate: [roleGuard], data: { roles: ['odontologo','admin'] } },
-  { path: 'filtros', component: OdontologosComponent, canActivate: [authGuard] },
+  { path: 'filtros', component: FiltrosComponent, canActivate: [authGuard] },
   { path: 'administrador', component: AdministradorComponent, canActivate: [roleGuard], data: { roles: ['admin'] } },
   { path: '**', redirectTo: '' },
 ];

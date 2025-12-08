@@ -1,0 +1,68 @@
+<div class="modulo filtros">
+  <header class="modulo__header">
+    <h1>Buscador de filtros</h1>
+    <p>Filtra citas por estado, fecha, paciente u odontologo segun tu rol.</p>
+  </header>
+
+  <section class="modulo__seccion filtros__panel">
+    <div class="grid">
+      <label class="campo">
+        <span>Estado</span>
+        <select [(ngModel)]="filtroEstado">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let e of estados" [value]="e">{{ e }}</option>
+        </select>
+      </label>
+      <label class="campo" *ngIf="rol !== 'paciente'">
+        <span>Paciente</span>
+        <select [(ngModel)]="filtroPacienteId">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let p of pacientes" [ngValue]="p.id">{{ p.nombre || p.correo }}</option>
+        </select>
+      </label>
+      <label class="campo" *ngIf="rol !== 'paciente'">
+        <span>Odontologo</span>
+        <select [(ngModel)]="filtroOdontologoId">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let o of odontologos" [ngValue]="o.id">{{ o.nombre || o.correo }}</option>
+        </select>
+      </label>
+      <label class="campo">
+        <span>Desde</span>
+        <input type="date" [(ngModel)]="filtroDesde" />
+      </label>
+      <label class="campo">
+        <span>Hasta</span>
+        <input type="date" [(ngModel)]="filtroHasta" />
+      </label>
+    </div>
+    <div class="acciones">
+      <button class="btn btn--primary" type="button" (click)="buscar()" [disabled]="cargando">{{ cargando ? 'Buscando...' : 'Buscar' }}</button>
+      <button class="btn btn--light" type="button" (click)="reset()">Limpiar</button>
+    </div>
+    <div class="estado" *ngIf="error">{{ error }}</div>
+  </section>
+
+  <section class="modulo__seccion">
+    <h2>Resultados</h2>
+    <div class="estado" *ngIf="cargando">Cargando...</div>
+    <div class="estado" *ngIf="!cargando && !resultados.length">Sin resultados</div>
+
+    <div class="tabla" *ngIf="!cargando && resultados.length">
+      <div class="tabla__head filtros__head">
+        <div>Fecha</div>
+        <div>Paciente</div>
+        <div>Odontologo</div>
+        <div>Estado</div>
+        <div>Motivo / Nota</div>
+      </div>
+      <div class="tabla__row filtros__row" *ngFor="let r of resultados">
+        <div>{{ r.inicio | date:'dd/MM HH:mm' }} - {{ r.fin | date:'HH:mm' }}</div>
+        <div>{{ r.paciente?.nombre || r.paciente?.correo || r.pacienteId }}</div>
+        <div>{{ r.odontologo?.nombre || r.odontologo?.correo || r.odontologoId }}</div>
+        <div><span class="pill pill--{{ r.estado }}">{{ r.estado }}</span></div>
+        <div>{{ r.motivo || r.nota || '-' }}</div>
+      </div>
+    </div>
+  </section>
+</div>
