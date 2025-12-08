@@ -16,6 +16,7 @@ export async function runMigrations() {
     `ALTER TABLE "citas" ADD COLUMN IF NOT EXISTS "tratamiento" TEXT NULL;`,
     `ALTER TABLE "citas" ADD COLUMN IF NOT EXISTS "observaciones" TEXT NULL;`,
     `ALTER TABLE "citas" ADD COLUMN IF NOT EXISTS "atendida_por" INTEGER NULL;`,
+    `ALTER TABLE "citas" ADD COLUMN IF NOT EXISTS "receta" TEXT NULL;`,
   ];
 
   for (const sql of queries) {

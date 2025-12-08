@@ -96,13 +96,14 @@ export const agenda = async (req, res) => {
 
 export const atenderCita = async (req, res) => {
   const { id } = req.params;
-  const { diagnostico, tratamiento, observaciones } = req.body;
+  const { diagnostico, tratamiento, observaciones, receta } = req.body;
   try {
     const cita = await Cita.findByPk(id);
     if (!cita) return res.status(404).json({ mensaje: "Cita no encontrada" });
     cita.diagnostico = diagnostico ?? cita.diagnostico;
     cita.tratamiento = tratamiento ?? cita.tratamiento;
     cita.observaciones = observaciones ?? cita.observaciones;
+    cita.receta = receta ?? cita.receta;
     cita.estado = "atendida";
     cita.atendidaPor = cita.odontologoId;
     await cita.save();
@@ -193,7 +194,7 @@ export const historialOdontologo = async (req, res) => {
 // Guardar notas (sin cerrar la cita)
 export const guardarNotasCita = async (req, res) => {
   const { id } = req.params;
-  const { diagnostico, tratamiento, observaciones, nota } = req.body || {};
+  const { diagnostico, tratamiento, observaciones, nota, receta } = req.body || {};
   try {
     const cita = await Cita.findByPk(id);
     if (!cita) return res.status(404).json({ mensaje: "Cita no encontrada" });
@@ -202,6 +203,7 @@ export const guardarNotasCita = async (req, res) => {
     if (tratamiento !== undefined) cita.tratamiento = tratamiento;
     if (observaciones !== undefined) cita.observaciones = observaciones;
     if (nota !== undefined) cita.nota = nota;
+    if (receta !== undefined) cita.receta = receta;
 
     await cita.save();
     res.json({ mensaje: "Notas guardadas", cita });

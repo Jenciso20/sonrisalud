@@ -52,6 +52,12 @@
   color: #0a3d62;
 }
 
+.filtros-panel { border: 1px solid #e3ebf7; }
+.filtros__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.filtros__eyebrow { text-transform: uppercase; font-size: 11px; letter-spacing: 0.8px; color: #6c5ce7; margin: 0; }
+.filtros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
+.filtros__actions { display: flex; gap: 8px; align-items: center; }
+
 .modulo__seccion ul {
   margin: 0;
   padding-left: 18px;
@@ -67,10 +73,12 @@
 .estado { margin: 8px 0; color: #c0392b; }
 .atencion { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .atencion textarea { min-height: 60px; padding: 8px; border: 1px solid #dfe6e9; border-radius: 8px; }
+.atencion textarea[placeholder*="Receta"] { min-height: 120px; }
 .acciones { display: flex; gap: 8px; }
 
 /* Week view */
 .agenda-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.mini-info { color: #636e72; font-size: 13px; }
 .week { display: grid; gap: 8px; }
 .week__header { display: grid; grid-template-columns: 60px repeat(7, 1fr); gap: 8px; }
 .week__timecol { color: #636e72; font-size: 12px; }

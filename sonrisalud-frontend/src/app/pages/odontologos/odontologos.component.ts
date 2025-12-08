@@ -14,6 +14,11 @@ interface Cita {
   pacienteId: number;
   paciente?: { id: number; nombre?: string; correo?: string };
   motivo?: string;
+  diagnostico?: string;
+  tratamiento?: string;
+  observaciones?: string;
+  nota?: string;
+  receta?: string;
 }
 
 @Component({
@@ -44,6 +49,7 @@ export class OdontologosComponent {
   tratamiento = '';
   observaciones = '';
   nota = '';
+  receta = '';
   guardando = false;
   savingDraft = false;
   lastDraftAt: string | null = null;
@@ -60,6 +66,7 @@ export class OdontologosComponent {
   historialPropio: any[] = [];
   loadingHistPropio = false;
   draggingId: number | null = null;
+  odontologos: any[] = [];
 
   get citasProximas(): Cita[] {
     const ahora = new Date();
@@ -90,6 +97,7 @@ export class OdontologosComponent {
     this.odService.obtenerOdontologos().subscribe({
       next: (ods) => {
         const lista = Array.isArray(ods) ? ods : [];
+        this.odontologos = lista;
         const correo = this.auth.getUser()?.correo;
         const propio = correo ? lista.find(o => o?.correo === correo) : null;
         const primero = propio || (lista.length ? lista[0] : null);
@@ -121,6 +129,14 @@ export class OdontologosComponent {
   prevWeek() { const d = new Date(this.weekStart); d.setDate(d.getDate() - 7); this.weekStart = d.toISOString().slice(0,10); this.buscar(); }
   nextWeek() { const d = new Date(this.weekStart); d.setDate(d.getDate() + 7); this.weekStart = d.toISOString().slice(0,10); this.buscar(); }
   todayWeek() { this.weekStart = this.getWeekStart(new Date()); this.buscar(); }
+  limpiarFiltros() {
+    this.filterEstado = null;
+    this.filterPacienteId = null;
+    this.viewMode = 'week';
+    this.fecha = new Date().toISOString().slice(0, 10);
+    this.weekStart = this.getWeekStart(new Date());
+    this.buscar();
+  }
 
   buscar(): void {
     if (this.viewTab === 'historial') { this.cargarHistorialPropio(); return; }
@@ -135,10 +151,11 @@ export class OdontologosComponent {
 
   abrirAtencion(c: Cita): void {
     this.sel = c;
-    this.diagnostico = '';
-    this.tratamiento = '';
-    this.observaciones = '';
-    this.nota = '';
+    this.diagnostico = c.diagnostico || '';
+    this.tratamiento = c.tratamiento || '';
+    this.observaciones = c.observaciones || '';
+    this.nota = c.nota || '';
+    this.receta = c.receta || '';
     this.lastDraftAt = null;
     this.cargarHistorial(c.pacienteId);
   }
@@ -156,7 +173,7 @@ export class OdontologosComponent {
   atender(): void {
     if (!this.sel) return;
     this.guardando = true;
-    this.odService.atenderCita(this.sel.id, { diagnostico: this.diagnostico || undefined, tratamiento: this.tratamiento || undefined, observaciones: this.observaciones || undefined }).subscribe({
+    this.odService.atenderCita(this.sel.id, { diagnostico: this.diagnostico || undefined, tratamiento: this.tratamiento || undefined, observaciones: this.observaciones || undefined, receta: this.receta || undefined }).subscribe({
       next: () => { this.guardando = false; this.cerrarAtencion(); this.buscar(); },
       error: (err) => { this.error = err?.error?.mensaje || 'Error al guardar'; this.guardando = false; }
     });
@@ -170,7 +187,7 @@ export class OdontologosComponent {
   guardarNotas(isDraft = false): void {
     if (!this.sel) return;
     if (isDraft) this.savingDraft = true; else this.guardando = true;
-    this.odService.guardarNotasCita(this.sel.id, { diagnostico: this.diagnostico || undefined, tratamiento: this.tratamiento || undefined, observaciones: this.observaciones || undefined, nota: this.nota || undefined }).subscribe({
+    this.odService.guardarNotasCita(this.sel.id, { diagnostico: this.diagnostico || undefined, tratamiento: this.tratamiento || undefined, observaciones: this.observaciones || undefined, nota: this.nota || undefined, receta: this.receta || undefined }).subscribe({
       next: () => {
         if (isDraft) {
           this.savingDraft = false;
@@ -244,10 +261,7 @@ export class OdontologosComponent {
     if (!this.odontologoId || !this.resFecha) { this.error = 'Elige fecha'; return; }
     this.error = '';
     this.resBuscando = true;
-    this.odService
-      .agenda(this.odontologoId, this.resFecha + 'T00:00:00', this.resFecha + 'T23:59:59')
-      .subscribe({ next: () => {}, error: () => {} }); // no usado aquÃ­
-        this.citasService.obtenerDisponibilidad(this.odontologoId, this.resFecha).subscribe({
+    this.citasService.obtenerDisponibilidad(this.odontologoId, this.resFecha).subscribe({
       next: (r) => {
         this.resSlots = r?.slots || [];
         this.resDuracion = r?.duracion || 30;
@@ -260,7 +274,6 @@ export class OdontologosComponent {
       }
     });
   }
-
   cancelarOd(c: any): void {
     if (!c?.id) return;
     if (!confirm('Â¿Cancelar esta cita?')) return;
@@ -318,7 +331,80 @@ export class OdontologosComponent {
       error: (err) => { this.error = err?.error?.mensaje || 'No se pudo mover la cita'; this.draggingId = null; }
     });
   }
+
+  imprimirReceta(): void {
+    if (!this.sel) return;
+    const pacienteNombre = this.sel.paciente?.nombre || `Paciente #${this.sel.pacienteId}`;
+    const od = this.odontologos.find(o => o.id === this.odontologoId);
+    const odNombre = od?.nombre || 'Odontologo';
+    const fecha = new Date(this.sel.inicio).toLocaleString('es-PE', { dateStyle: 'long', timeStyle: 'short' });
+    const cuerpoReceta = this.receta || 'Sin receta registrada';
+    const contenido = `
+      <html>
+        <head>
+          <title>Receta - ${pacienteNombre}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 32px; color: #1c1c1c; }
+            .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+            .marca { font-size: 18px; font-weight: 800; color: #0a3d62; }
+            .info { font-size: 13px; color: #4b5563; }
+            h1 { margin: 0 0 12px; font-size: 22px; color: #0a3d62; }
+            .card { border: 1px solid #d7e0ea; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+            .label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+            .valor { font-size: 15px; margin: 0; }
+            .receta { white-space: pre-wrap; border: 1px dashed #cbd5e1; padding: 12px; border-radius: 10px; background: #f8fafc; min-height: 120px; }
+            .firma { margin-top: 40px; text-align: center; }
+            .firma hr { width: 220px; }
+            @media print {
+              body { padding: 16px; }
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="marca">SonriSalud</div>
+              <div class="info">Receta odontológica</div>
+            </div>
+            <div class="info">
+              <div><strong>Fecha:</strong> ${fecha}</div>
+              <div><strong>Odontólogo:</strong> ${odNombre}</div>
+            </div>
+          </div>
+          <h1>Paciente: ${pacienteNombre}</h1>
+          <div class="card">
+            <div class="label">Diagnóstico</div>
+            <p class="valor">${this.diagnostico || 'Sin diagnóstico registrado'}</p>
+          </div>
+          <div class="card">
+            <div class="label">Receta</div>
+            <div class="receta">${cuerpoReceta}</div>
+          </div>
+          <div class="card">
+            <div class="label">Indicaciones / Tratamiento</div>
+            <p class="valor">${this.tratamiento || 'Sin indicaciones'}</p>
+          </div>
+          <div class="firma">
+            <hr />
+            <div>${odNombre}</div>
+            <div>Firma y sello</div>
+          </div>
+        </body>
+      </html>
+    `;
+    const popup = window.open('', '_blank', 'width=720,height=900');
+    if (!popup) { this.error = 'El navegador bloqueó la ventana de impresión'; return; }
+    popup.document.open();
+    popup.document.write(contenido);
+    popup.document.close();
+    popup.focus();
+    popup.print();
+  }
 }
+
+
+
 
 
 

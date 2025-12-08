@@ -48,6 +48,10 @@ export const Cita = sequelize.define(
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  receta: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   observaciones: {
     type: DataTypes.TEXT,
     allowNull: true,

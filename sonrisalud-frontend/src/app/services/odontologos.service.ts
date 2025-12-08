@@ -22,11 +22,11 @@ export class OdontologosService {
     return this.http.get<any[]>(`${this.apiBase}/odontologos/agenda`, { params });
   }
 
-  atenderCita(id: number, payload: { diagnostico?: string; tratamiento?: string; observaciones?: string }): Observable<any> {
+  atenderCita(id: number, payload: { diagnostico?: string; tratamiento?: string; observaciones?: string; receta?: string }): Observable<any> {
     return this.http.patch(`${this.apiBase}/odontologos/citas/${id}/atender`, payload);
   }
 
-  guardarNotasCita(id: number, payload: { diagnostico?: string; tratamiento?: string; observaciones?: string; nota?: string }): Observable<any> {
+  guardarNotasCita(id: number, payload: { diagnostico?: string; tratamiento?: string; observaciones?: string; nota?: string; receta?: string }): Observable<any> {
     return this.http.patch(`${this.apiBase}/odontologos/citas/${id}/notas`, payload);
   }
 
