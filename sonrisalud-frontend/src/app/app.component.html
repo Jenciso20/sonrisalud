@@ -25,6 +25,10 @@
         <span class="icon">OD</span>
         <span class="label" *ngIf="!sidebarCollapsed">Odontologo</span>
       </a>
+      <a *ngIf="authService.isOdontologo() || authService.isAdmin()" [routerLink]="['/odontologos']" fragment="filtros-agenda" routerLinkActive="active">
+        <span class="icon">FL</span>
+        <span class="label" *ngIf="!sidebarCollapsed">Filtros</span>
+      </a>
       <a *ngIf="authService.isOdontologo() || authService.isAdmin()" [routerLink]="['/odontologos']" [queryParams]="{ tab: 'historial' }" routerLinkActive="active">
         <span class="icon">H</span>
         <span class="label" *ngIf="!sidebarCollapsed">Historial</span>
