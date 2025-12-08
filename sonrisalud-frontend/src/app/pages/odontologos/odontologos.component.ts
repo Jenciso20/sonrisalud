@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OdontologosService } from '../../services/odontologos.service';
 import { AuthService } from '../../services/auth.service';
 import { CitasService } from '../../services/citas.service';
+import { AdminService } from '../../services/admin.service';
 
 interface Cita {
   id: number;
@@ -66,6 +67,7 @@ export class OdontologosComponent {
   historialPropio: any[] = [];
   loadingHistPropio = false;
   draggingId: number | null = null;
+  role: string | null = null;
   odontologos: any[] = [];
 
   get citasProximas(): Cita[] {
@@ -80,9 +82,11 @@ export class OdontologosComponent {
     private auth: AuthService,
     private route: ActivatedRoute,
     private citasService: CitasService,
+    private adminService: AdminService,
   ) {}
 
   ngOnInit(): void {
+    this.role = this.auth.getRole?.() || null;
     this.cargarOdontologoYBuscar();
     this.cargarPacientes();
     this.route.queryParamMap.subscribe((p) => {
@@ -206,7 +210,16 @@ export class OdontologosComponent {
 
   cargarHistorialPropio(): void {
     this.loadingHistPropio = true; this.error = '';
-    const role = this.auth.getRole();
+    const role = this.role || this.auth.getRole();
+
+    if (role === 'admin') {
+      this.adminService.listarCitas({ odontologoId: null, pacienteId: null, estado: null, desde: null, hasta: null }).subscribe({
+        next: (h) => { this.historialPropio = Array.isArray(h) ? h : []; this.loadingHistPropio = false; },
+        error: (err) => { this.error = err?.error?.mensaje || 'Error al cargar historial'; this.loadingHistPropio = false; }
+      });
+      return;
+    }
+
     const odId = role === 'admin' ? (this.odontologoId || undefined) : undefined;
     this.odService.historialPropio(50, odId).subscribe({
       next: (h) => { this.historialPropio = Array.isArray(h) ? h : []; this.loadingHistPropio = false; },
