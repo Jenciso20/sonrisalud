@@ -66,9 +66,11 @@
       <div class="week__header">
         <div class="week__timecol"></div>
         <div class="week__day" *ngFor="let d of weekDays">
-          <span>{{ d.label }}</span>
-          <span class="badge badge--today" *ngIf="isToday(d.iso)">Hoy</span>
-          <span class="badge badge--tomorrow" *ngIf="isTomorrow(d.iso)">Mañana</span>
+          <span class="week__day-label">{{ d.label }}</span>
+          <div class="week__day-badges">
+            <span class="badge badge--today" *ngIf="isToday(d.iso)">Hoy</span>
+            <span class="badge badge--tomorrow" *ngIf="isTomorrow(d.iso)">Mañana</span>
+          </div>
         </div>
       </div>
       <div class="week__body">
