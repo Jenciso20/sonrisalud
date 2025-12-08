@@ -250,6 +250,39 @@ export class OdontologosComponent {
   resDuracion = 0;
   resMotivo = '';
 
+  seleccionarResSlot(s: { inicio: string; fin: string; etiqueta: string }): void {
+    this.resSlotSel = s;
+  }
+
+  crearCitaComoOd(): void {
+    if (!this.pacienteId || !this.resSlotSel) {
+      this.error = 'Selecciona paciente y horario';
+      return;
+    }
+    this.error = '';
+    this.resGuardando = true;
+    const payload: any = {
+      pacienteId: this.pacienteId,
+      inicio: this.resSlotSel.inicio,
+      motivo: this.resMotivo || undefined,
+    };
+    if (this.odontologoId) payload.odontologoId = this.odontologoId;
+
+    this.odService.crearCitaComoOdontologo(payload).subscribe({
+      next: () => {
+        this.resGuardando = false;
+        this.resSlots = [];
+        this.resSlotSel = null;
+        this.resMotivo = '';
+        this.buscar();
+      },
+      error: (err) => {
+        this.resGuardando = false;
+        this.error = err?.error?.mensaje || 'No se pudo crear la cita';
+      },
+    });
+  }
+
   cargarPacientes(): void {
     this.odService.listarPacientes().subscribe({
       next: (p) => (this.pacientes = p || []),
