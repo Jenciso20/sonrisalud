@@ -272,13 +272,21 @@ export class PacientesComponent implements OnInit {
     this.weekStart = this.getWeekStart(d);
   }
 
+  private dayKey(value: string | Date): string {
+    const d = typeof value === 'string' ? new Date(value) : value;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   // Semana actual mostrada en el calendario (lun-dom)
   get weekDays(): { label: string; iso: string; date: Date }[] {
     const days: { label: string; iso: string; date: Date }[] = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(this.weekStart);
       d.setDate(d.getDate() + i);
-      const iso = this.formatIsoDate(d);
+      const iso = this.dayKey(d);
       const label = d.toLocaleDateString(undefined, {
         weekday: 'short',
         day: '2-digit',
@@ -297,7 +305,7 @@ export class PacientesComponent implements OnInit {
 
     const events = (this.citas || []).filter((c) => {
       const d = new Date(c.inicio);
-      return this.formatIsoDate(d) === iso;
+      return this.dayKey(d) === iso;
     }).map((c) => {
       const s = new Date(c.inicio);
       const e = new Date(c.fin || c.inicio);
@@ -323,7 +331,7 @@ export class PacientesComponent implements OnInit {
   }
 
   currentLinePosition(dayIso: string): number | null {
-    const todayIso = this.formatIsoDate(new Date());
+    const todayIso = this.dayKey(new Date());
     if (dayIso !== todayIso) return null;
     const now = new Date();
     const minutes = now.getHours() * 60 + now.getMinutes();
