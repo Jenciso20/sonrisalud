@@ -339,6 +339,16 @@ export class PacientesComponent implements OnInit {
     return (minutes - this.dayStartMinutes) * this.pxPerMinute;
   }
 
+  isToday(iso: string): boolean {
+    return this.dayKey(new Date()) === iso;
+  }
+
+  isTomorrow(iso: string): boolean {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return this.dayKey(d) === iso;
+  }
+
   obtenerEtiquetaOdontologo(odontologo: any): string {
     const nombre = odontologo?.nombre || 'Odontologo';
     return `${nombre}`;

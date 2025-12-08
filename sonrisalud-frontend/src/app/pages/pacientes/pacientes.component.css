@@ -379,7 +379,9 @@
 .week { display: grid; gap: 8px; }
 .week__header { display: grid; grid-template-columns: 60px repeat(7, 1fr); gap: 8px; }
 .week__timecol { color: #636e72; font-size: 12px; }
-.week__day { text-align: center; font-weight: 700; color: #0a3d62; }
+.week__day { text-align: center; font-weight: 700; color: #0a3d62; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.week__day-label { font-size: 16px; }
+.week__day-badges { display: flex; gap: 6px; align-items: center; justify-content: center; }
 .week__body { display: grid; grid-template-columns: 60px repeat(7, 1fr); gap: 8px; }
 .week__timecol .hour { height: 60px; border-bottom: 1px dashed #e3ebf7; display: flex; align-items: flex-start; justify-content: flex-end; padding-right: 6px; }
 .week__daycol { position: relative; height: 720px; background: #fff; border: 1px solid #dde6ee; border-radius: 10px; box-shadow: var(--shadow-1); overflow: hidden; }
