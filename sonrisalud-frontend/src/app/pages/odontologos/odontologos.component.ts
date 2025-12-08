@@ -68,6 +68,7 @@ export class OdontologosComponent {
   loadingHistPropio = false;
   draggingId: number | null = null;
   role: string | null = null;
+  private readonly dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
   // Admin: selector de odontologo
   onOdontologoChange(idStr: string) {
     const id = Number(idStr) || null;
@@ -243,11 +244,11 @@ export class OdontologosComponent {
 
   // Helpers calendario
   get weekDays(): { label: string; iso: string }[] {
-    const labels = ['Lun','Mar','Mie','Jue','Vie','Sab','Dom'];
     const start = new Date(this.weekStart + 'T00:00:00');
     return Array.from({ length: 7 }).map((_, i) => {
       const d = new Date(start); d.setDate(start.getDate() + i);
-      return { label: `${labels[i]} ${d.getDate()}` , iso: this.dayKey(d) };
+      const label = `${this.dayNames[i]} ${String(d.getDate()).padStart(2, '0')}`;
+      return { label, iso: this.dayKey(d) };
     });
   }
 

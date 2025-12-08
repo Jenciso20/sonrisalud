@@ -67,6 +67,7 @@ export class PacientesComponent implements OnInit {
   dayStartMinutes = 8 * 60;
   dayEndMinutes = 20 * 60;
   pxPerMinute = 1; // 720px por dia
+  private readonly dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   constructor(
     private citasService: CitasService,
@@ -287,11 +288,7 @@ export class PacientesComponent implements OnInit {
       const d = new Date(this.weekStart);
       d.setDate(d.getDate() + i);
       const iso = this.dayKey(d);
-      const label = d.toLocaleDateString(undefined, {
-        weekday: 'short',
-        day: '2-digit',
-        month: '2-digit'
-      });
+      const label = `${this.dayNames[i]} ${String(d.getDate()).padStart(2, '0')}`;
       days.push({ label, iso, date: d });
     }
     return days;
