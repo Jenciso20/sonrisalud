@@ -45,6 +45,12 @@
         <button class="btn btn--light" (click)="todayWeek()">Hoy</button>
         <button class="btn btn--secondary" (click)="nextWeek()">Semana siguiente</button>
       </div>
+      <div class="right" *ngIf="role === 'admin'">
+        <label>Odontologo:</label>
+        <select [ngModel]="odontologoId" (ngModelChange)="onOdontologoChange($event)">
+          <option *ngFor="let o of odontologos" [ngValue]="o.id">{{ o.nombre }}</option>
+        </select>
+      </div>
     </div>
 
     <div class="estado" *ngIf="error">{{ error }}</div>

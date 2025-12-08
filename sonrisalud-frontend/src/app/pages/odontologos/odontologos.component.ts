@@ -68,6 +68,12 @@ export class OdontologosComponent {
   loadingHistPropio = false;
   draggingId: number | null = null;
   role: string | null = null;
+  // Admin: selector de odontologo
+  onOdontologoChange(idStr: string) {
+    const id = Number(idStr) || null;
+    this.odontologoId = id;
+    this.buscar();
+  }
   odontologos: any[] = [];
 
   get citasProximas(): Cita[] {

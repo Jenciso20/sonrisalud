@@ -78,6 +78,7 @@
 
 /* Week view */
 .agenda-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.agenda-controls .right { display: flex; align-items: center; gap: 8px; }
 .mini-info { color: #636e72; font-size: 13px; }
 .week { display: grid; gap: 8px; }
 .week__header { display: grid; grid-template-columns: 60px repeat(7, 1fr); gap: 8px; }
