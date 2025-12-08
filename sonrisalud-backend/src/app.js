@@ -145,4 +145,17 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   startServer();
 }
 
+// En entornos serverless (Vercel) aplicar migraciones ligeras al cargar
+if (process.env.VERCEL) {
+  (async () => {
+    try {
+      await sequelize.authenticate();
+      await runMigrations();
+      logger.info("Migraciones aplicadas en entorno serverless.");
+    } catch (e) {
+      logger.error("Error aplicando migraciones en serverless:", e);
+    }
+  })();
+}
+
 export default app;
