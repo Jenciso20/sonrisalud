@@ -18,6 +18,7 @@ export class AdministradorComponent implements OnInit {
   pacientes: any[] = [];
   odontologos: any[] = [];
   citas: any[] = [];
+  historial: any[] = [];
   usuarios: any[] = [];
 
   filtroPacienteId: number | null = null;
@@ -35,9 +36,11 @@ export class AdministradorComponent implements OnInit {
   duracion = 0;
 
   loading = false;
+  loadingHist = false;
   buscando = false;
   creando = false;
   error = '';
+  errorHist = '';
   ok = '';
   waEnabled = false;
 
@@ -53,6 +56,7 @@ export class AdministradorComponent implements OnInit {
       error: () => (this.waEnabled = false),
     });
     this.buscarCitas();
+    this.cargarHistorial();
   }
 
   cargarCat(): void {
@@ -99,10 +103,33 @@ export class AdministradorComponent implements OnInit {
           this.loading = false;
         },
         error: (err) => {
-          this.error = err?.error?.mensaje || 'Error al listar citas';
-          this.loading = false;
-        },
-      });
+        this.error = err?.error?.mensaje || 'Error al listar citas';
+        this.loading = false;
+      },
+    });
+    // Mantener historial actualizado cuando se filtra
+    this.cargarHistorial();
+  }
+
+  cargarHistorial(): void {
+    this.loadingHist = true;
+    this.errorHist = '';
+    this.adminService.listarCitas({
+      pacienteId: null,
+      odontologoId: null,
+      estado: null,
+      desde: null,
+      hasta: null,
+    }).subscribe({
+      next: (c) => {
+        this.historial = Array.isArray(c) ? c : [];
+        this.loadingHist = false;
+      },
+      error: (err) => {
+        this.errorHist = err?.error?.mensaje || 'Error al listar historial';
+        this.loadingHist = false;
+      }
+    });
   }
 
   limpiarDisponibilidad(): void {

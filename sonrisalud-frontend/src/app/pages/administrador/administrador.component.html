@@ -54,6 +54,33 @@
     </div>
   </section>
 
+  <section class="modulo__seccion">
+    <div class="seccion__header">
+      <h2>Historial de citas (todos)</h2>
+      <span>Vista solo lectura de todas las citas</span>
+    </div>
+    <div class="estado" *ngIf="loadingHist">Cargando...</div>
+    <div class="estado estado--error" *ngIf="errorHist">{{ errorHist }}</div>
+    <div class="estado" *ngIf="!loadingHist && !historial.length">Sin registros</div>
+
+    <div class="tabla" *ngIf="!loadingHist && historial.length">
+      <div class="tabla__head">
+        <div>Fecha</div>
+        <div>Paciente</div>
+        <div>Odontologo</div>
+        <div>Estado</div>
+        <div>Motivo/Nota</div>
+      </div>
+      <div class="tabla__row" *ngFor="let c of historial">
+        <div>{{ c.inicio | date:'dd/MM HH:mm' }} - {{ c.fin | date:'HH:mm' }}</div>
+        <div>{{ c.paciente?.nombre || ('#'+c.pacienteId) }}</div>
+        <div>{{ c.odontologo?.nombre || ('#'+c.odontologoId) }}</div>
+        <div>{{ c.estado }}</div>
+        <div>{{ c.motivo || c.nota || '-' }}</div>
+      </div>
+    </div>
+  </section>
+
   <!-- Listado de citas removido a pedido; usar modulo de filtros global -->
 
   <section class="modulo__seccion">
