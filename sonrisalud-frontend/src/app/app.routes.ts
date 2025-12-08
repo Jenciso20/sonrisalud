@@ -16,6 +16,7 @@ export const routes: Routes = [
   { path: 'perfil', component: PerfilComponent, canActivate: [authGuard] },
   { path: 'pacientes', component: PacientesComponent, canActivate: [roleGuard], data: { roles: ['paciente','admin'] } },
   { path: 'odontologos', component: OdontologosComponent, canActivate: [roleGuard], data: { roles: ['odontologo','admin'] } },
+  { path: 'filtros', component: OdontologosComponent, canActivate: [authGuard] },
   { path: 'administrador', component: AdministradorComponent, canActivate: [roleGuard], data: { roles: ['admin'] } },
   { path: '**', redirectTo: '' },
 ];

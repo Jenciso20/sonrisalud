@@ -52,8 +52,7 @@ export class MenuComponent {
     {
       titulo: 'Modulo de Filtros',
       descripcion: 'Filtra y navega rapido por la agenda semanal o diaria.',
-      ruta: '/odontologos',
-      fragment: 'filtros-agenda',
+      ruta: '/filtros',
       icono: 'FLT',
       items: [
         'Filtro por estado, paciente y vista (semana o dia).',
