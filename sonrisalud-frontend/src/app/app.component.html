@@ -25,7 +25,7 @@
         <span class="icon">OD</span>
         <span class="label" *ngIf="!sidebarCollapsed">Odontologo</span>
       </a>
-      <a *ngIf="authService.isOdontologo() || authService.isAdmin()" [routerLink]="['/odontologos']" fragment="filtros-agenda" routerLinkActive="active">
+      <a [routerLink]="['/odontologos']" fragment="filtros-agenda" routerLinkActive="active">
         <span class="icon">FL</span>
         <span class="label" *ngIf="!sidebarCollapsed">Filtros</span>
       </a>
