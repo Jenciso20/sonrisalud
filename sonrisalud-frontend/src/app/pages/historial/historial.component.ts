@@ -25,14 +25,14 @@ export class HistorialComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.role = this.auth.getRole?.() || null;
+    this.role = (this.auth.getRole?.() || '').toLowerCase() || null;
     this.cargar();
   }
 
   cargar(): void {
     this.loading = true;
     this.error = '';
-    const role = this.role || this.auth.getRole();
+    const role = (this.role || this.auth.getRole() || '').toLowerCase();
 
     if (role === 'admin') {
       this.adminService.listarCitas({
@@ -43,7 +43,12 @@ export class HistorialComponent implements OnInit {
         hasta: null,
       }).subscribe({
         next: (c) => { this.registros = Array.isArray(c) ? c : []; this.loading = false; },
-        error: (err) => { this.error = err?.error?.mensaje || 'Error al obtener historial'; this.loading = false; },
+        error: (err) => {
+          // Si falla como admin, mostramos el mensaje y no dejamos la pantalla vacía
+          this.error = err?.error?.mensaje || 'Error al obtener historial (admin)';
+          this.registros = [];
+          this.loading = false;
+        },
       });
       return;
     }
