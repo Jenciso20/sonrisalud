@@ -74,6 +74,14 @@ export class OdontologosComponent {
     this.odontologoId = id;
     this.buscar();
   }
+
+  private dayKey(value: string | Date): string {
+    const d = typeof value === 'string' ? new Date(value) : value;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
   odontologos: any[] = [];
 
   get citasProximas(): Cita[] {
@@ -239,12 +247,12 @@ export class OdontologosComponent {
     const start = new Date(this.weekStart + 'T00:00:00');
     return Array.from({ length: 7 }).map((_, i) => {
       const d = new Date(start); d.setDate(start.getDate() + i);
-      return { label: `${labels[i]} ${d.getDate()}` , iso: d.toISOString().slice(0,10) };
+      return { label: `${labels[i]} ${d.getDate()}` , iso: this.dayKey(d) };
     });
   }
 
   eventsForDay(iso: string): { cita: Cita; top: number; height: number; title: string }[] {
-    const inDay: any[] = this.citas.filter(c => (c as any).inicio.slice(0,10) === iso);
+    const inDay: any[] = this.citas.filter(c => this.dayKey((c as any).inicio) === iso);
     return inDay.map(c => {
       const start = new Date(c.inicio);
       const end = new Date(c.fin);
@@ -344,14 +352,14 @@ export class OdontologosComponent {
   }
 
   isToday(iso: string): boolean {
-    const today = new Date().toISOString().slice(0,10);
+    const today = this.dayKey(new Date());
     return iso === today;
   }
 
   isTomorrow(iso: string): boolean {
     const d = new Date();
     d.setDate(d.getDate() + 1);
-    return iso === d.toISOString().slice(0,10);
+    return iso === this.dayKey(d);
   }
 
   onDragStart(c: Cita) { this.draggingId = c.id; }
