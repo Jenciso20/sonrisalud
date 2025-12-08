@@ -6,6 +6,7 @@ interface MenuSection {
   titulo: string;
   descripcion: string;
   ruta: string;
+  fragment?: string;
   icono: string;
   items: string[];
 }
@@ -46,6 +47,18 @@ export class MenuComponent {
         'Carga de nuevos procedimientos o tratamientos realizados.',
         'Definicion de disponibilidad: dias y horarios de atencion.',
         'Bloqueo de horarios por vacaciones o descansos.'
+      ]
+    },
+    {
+      titulo: 'Modulo de Filtros',
+      descripcion: 'Filtra y navega rapido por la agenda semanal o diaria.',
+      ruta: '/odontologos',
+      fragment: 'filtros-agenda',
+      icono: 'FLT',
+      items: [
+        'Filtro por estado, paciente y vista (semana o dia).',
+        'Atajos a hoy y reseteo rapido de filtros.',
+        'Acceso directo a la agenda del odontologo para reprogramar.'
       ]
     },
     {

@@ -37,7 +37,7 @@
         <li *ngFor="let item of seccion.items">{{ item }}</li>
       </ul>
 
-      <a [routerLink]="seccion.ruta" class="menu-card__boton">
+      <a [routerLink]="seccion.ruta" [fragment]="seccion.fragment" class="menu-card__boton">
         Ingresar
       </a>
     </article>
