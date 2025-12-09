@@ -311,7 +311,7 @@ export class PacientesComponent implements OnInit {
       const clampedStart = Math.max(sMin, startMinutes);
       const clampedEnd = Math.min(eMin, endMinutes);
       const top = Math.max(0, (clampedStart - startMinutes) * pxPerMin);
-      const height = Math.max(10, (clampedEnd - clampedStart) * pxPerMin);
+      const height = Math.max(40, (clampedEnd - clampedStart) * pxPerMin);
       const title = c.odontologo?.nombre || 'Cita';
       return { cita: c, title, top, height, estadoClass: this.estadoClass(c.estado) };
     });
