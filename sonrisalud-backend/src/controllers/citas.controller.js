@@ -26,8 +26,8 @@ const parseToUtc = (value) => {
 };
 
 const addMinutes = (date, minutes) => new Date(date.getTime() + minutes * 60 * 1000);
-const durationForOdontologo = (odontologo) =>
-  Number(odontologo?.duracionConsulta) > 0 ? Number(odontologo.duracionConsulta) : 60;
+// Todas las citas duran 60 minutos (ignora duracionConsulta para evitar slots menores)
+const durationForOdontologo = (_odontologo) => 60;
 const isWeekend = (date) => {
   const d = date.getDay();
   return d === 0 || d === 6;
