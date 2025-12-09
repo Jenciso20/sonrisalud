@@ -261,7 +261,7 @@ export class OdontologosComponent {
       const endMin = end.getHours()*60 + end.getMinutes();
       const topMin = Math.max(0, startMin - this.dayStartMinutes);
       const bottomMin = Math.max(0, Math.min(this.dayEndMinutes, endMin) - this.dayStartMinutes);
-      const heightMin = Math.max(20, bottomMin - topMin);
+      const heightMin = Math.max(40, bottomMin - topMin);
       const title = c.paciente?.nombre ? c.paciente.nombre : `Paciente #${c.pacienteId || ''}`;
       return { cita: c, top: topMin * this.pxPerMinute, height: heightMin * this.pxPerMinute, title };
     });
