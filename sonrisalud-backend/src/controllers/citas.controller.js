@@ -134,7 +134,7 @@ export const crearCita = async (req, res) => {
     });
     // Fallback si no hay horarios configurados para ese día
     if (!horarios.length) {
-      horarios = [{ horaInicio: "08:00", horaFin: "20:00" }];
+      horarios = [{ horaInicio: "08:00", horaFin: "17:00" }];
     }
 
     const estaEnHorario = horarios.some((horario) => {
@@ -147,8 +147,8 @@ export const crearCita = async (req, res) => {
       return res.status(400).json({ mensaje: "El horario seleccionado no esta disponible" });
     }
 
-    // Bloqueo almuerzo 12:00-14:00
-    const lunchStart = 12 * 60;
+    // Bloqueo almuerzo 13:00-14:00
+    const lunchStart = 13 * 60;
     const lunchEnd = 14 * 60;
     const overlapLunch = !(finMin <= lunchStart || inicioMin >= lunchEnd);
     if (overlapLunch) {
@@ -278,14 +278,14 @@ export const obtenerDisponibilidad = async (req, res) => {
       (horario) => horario.diaSemana === diaSemana
     );
 
-    // Fallback: si no hay horarios configurados para ese dia, asumir jornada 08:00-20:00
+    // Fallback: si no hay horarios configurados para ese dia, asumir jornada 08:00-17:00
     // Esto facilita pruebas cuando aún no se cargaron horarios.
     const usarFallback = !horarios.length;
     if (usarFallback) {
       horarios = [
         {
           horaInicio: "08:00",
-          horaFin: "20:00",
+          horaFin: "17:00",
         },
       ];
     }
@@ -334,7 +334,7 @@ export const obtenerDisponibilidad = async (req, res) => {
         // Bloqueo de almuerzo 12:00-14:00
         const startMin = inicioSlot.getHours() * 60 + inicioSlot.getMinutes();
         const endMin = finSlot.getHours() * 60 + finSlot.getMinutes();
-        const lunchStart = 12 * 60;
+        const lunchStart = 13 * 60;
         const lunchEnd = 14 * 60;
         const overlapLunch = !(endMin <= lunchStart || startMin >= lunchEnd);
 
@@ -428,7 +428,7 @@ export const reprogramarCita = async (req, res) => {
       where: { odontologoId: cita.odontologoId, diaSemana },
     });
     if (!horarios.length) {
-      horarios = [{ horaInicio: "08:00", horaFin: "20:00" }];
+      horarios = [{ horaInicio: "08:00", horaFin: "17:00" }];
     }
 
     const estaEnHorario = horarios.some((horario) => {
@@ -736,3 +736,5 @@ export const adminCancelarCita = async (req, res) => {
     res.status(500).json({ mensaje: "Error al cancelar cita" });
   }
 };
+
+
