@@ -93,7 +93,7 @@
                (dragstart)="onDragStart(e.cita)"
                (dragend)="onDragEnd()"
                [ngClass]="estadoClase(e.cita.estado)">
-            <span class="event__hora">{{ e.cita.inicio | date:'HH:mm':'UTC' }}</span>
+            <span class="event__hora">{{ horaStr(e.cita.inicio) }}</span>
             <strong class="event__titulo">{{ e.title }}</strong>
             <small class="estado-pill">{{ e.cita.estado }}</small>
             <small class="event__motivo" *ngIf="e.cita.motivo">“{{ e.cita.motivo }}”</small>
@@ -112,7 +112,7 @@
         <div>Acciones</div>
       </div>
       <div class="tabla__row" *ngFor="let c of citas">
-        <div>{{ c.inicio | date:'HH:mm':'UTC' }} - {{ c.fin | date:'HH:mm':'UTC' }}</div>
+        <div>{{ horaStr(c.inicio) }} - {{ horaStr(c.fin) }}</div>
         <div>{{ c.paciente?.nombre || ('#' + c.pacienteId) }}</div>
         <div>{{ c.estado }}</div>
         <div>

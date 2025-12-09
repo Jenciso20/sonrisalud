@@ -281,6 +281,10 @@ export class PacientesComponent implements OnInit {
     return `${y}-${m}-${day}`;
   }
 
+  horaStr(value: string): string {
+    return (value || '').slice(11, 16);
+  }
+
   // Semana actual mostrada en el calendario (lun-dom)
   get weekDays(): { label: string; iso: string; date: Date }[] {
     const days: { label: string; iso: string; date: Date }[] = [];
@@ -306,8 +310,8 @@ export class PacientesComponent implements OnInit {
     }).map((c) => {
       const s = new Date(c.inicio);
       const e = new Date(c.fin || c.inicio);
-      const sMin = s.getHours() * 60 + s.getMinutes();
-      const eMin = e.getHours() * 60 + e.getMinutes();
+      const sMin = s.getUTCHours() * 60 + s.getUTCMinutes();
+      const eMin = e.getUTCHours() * 60 + e.getUTCMinutes();
       const clampedStart = Math.max(sMin, startMinutes);
       const clampedEnd = Math.min(eMin, endMinutes);
       const top = Math.max(0, (clampedStart - startMinutes) * pxPerMin);

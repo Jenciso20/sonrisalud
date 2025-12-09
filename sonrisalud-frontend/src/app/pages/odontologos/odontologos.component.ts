@@ -257,8 +257,8 @@ export class OdontologosComponent {
     return inDay.map(c => {
       const start = new Date(c.inicio);
       const end = new Date(c.fin);
-      const startMin = start.getHours()*60 + start.getMinutes();
-      const endMin = end.getHours()*60 + end.getMinutes();
+      const startMin = start.getUTCHours()*60 + start.getUTCMinutes();
+      const endMin = end.getUTCHours()*60 + end.getUTCMinutes();
       const topMin = Math.max(0, startMin - this.dayStartMinutes);
       const bottomMin = Math.max(0, Math.min(this.dayEndMinutes, endMin) - this.dayStartMinutes);
       const heightMin = Math.max(40, bottomMin - topMin);
@@ -361,6 +361,10 @@ export class OdontologosComponent {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     return iso === this.dayKey(d);
+  }
+
+  horaStr(value: string): string {
+    return (value || '').slice(11, 16);
   }
 
   onDragStart(c: Cita) { this.draggingId = c.id; }
