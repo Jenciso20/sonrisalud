@@ -10,7 +10,7 @@ import { sequelize } from "../config/db.js";
 const ESTADOS_ACTIVOS = ["pendiente", "confirmada"];
 const GAP_MINUTES = Number(process.env.APPOINTMENT_GAP_MINUTES || 10);
 const MIN_HOURS_BEFORE = Number(process.env.MIN_HOURS_BEFORE || 2);
-const MAX_ACTIVE_CITAS_PACIENTE = Number(process.env.MAX_ACTIVE_CITAS_PACIENTE || 3);
+const MAX_ACTIVE_CITAS_PACIENTE = Number(process.env.MAX_ACTIVE_CITAS_PACIENTE || 6);
 const BLOCK_WEEKENDS = (process.env.BLOCK_WEEKENDS || "true").toLowerCase() === "true";
 
 const toMinutes = (timeString) => {
