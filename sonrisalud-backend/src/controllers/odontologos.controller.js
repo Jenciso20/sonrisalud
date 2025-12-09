@@ -100,6 +100,10 @@ export const atenderCita = async (req, res) => {
   try {
     const cita = await Cita.findByPk(id);
     if (!cita) return res.status(404).json({ mensaje: "Cita no encontrada" });
+    // No permitir atender si ya fue cancelada o atendida
+    if (["cancelada", "atendida"].includes((cita.estado || "").toLowerCase())) {
+      return res.status(400).json({ mensaje: "No se puede atender una cita cancelada o ya atendida" });
+    }
     cita.diagnostico = diagnostico ?? cita.diagnostico;
     cita.tratamiento = tratamiento ?? cita.tratamiento;
     cita.observaciones = observaciones ?? cita.observaciones;
