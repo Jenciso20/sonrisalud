@@ -84,7 +84,7 @@
           <div>Estado</div>
         </div>
         <div class="tabla__row" *ngFor="let o of slotsOcupados">
-          <div>{{ o.inicio | date:'HH:mm' }} - {{ o.fin | date:'HH:mm' }}</div>
+          <div>{{ o.inicio | date:'HH:mm':'UTC' }} - {{ o.fin | date:'HH:mm':'UTC' }}</div>
           <div>{{ o.estado }}</div>
         </div>
       </div>
@@ -151,7 +151,7 @@
           <div class="current-line" *ngIf="currentLinePosition(d.iso) !== null" [style.top.px]="currentLinePosition(d.iso)"></div>
           <div class="slot-bg" *ngFor="let h of [].constructor(12)"></div>
           <div class="event" *ngFor="let e of eventsForDay(d.iso)" [ngClass]="e.estadoClass" [style.top.px]="e.top" [style.height.px]="e.height">
-            <span class="event__hora">{{ e.cita.inicio | date:'HH:mm' }}</span>
+            <span class="event__hora">{{ e.cita.inicio | date:'HH:mm':'UTC' }}</span>
             <strong class="event__titulo">{{ e.title }}</strong>
             <small class="event__estado">{{ e.cita.estado | titlecase }}</small>
             <small class="event__motivo" *ngIf="e.cita.motivo">“{{ e.cita.motivo }}”</small>
@@ -169,7 +169,7 @@
     <div class="acciones-rapidas__list">
       <article class="mini-card" *ngFor="let cita of citasProximas | slice:0:3">
         <div class="mini-card__info">
-          <strong>{{ cita.inicio | date:'EEE d/MM HH:mm' }}</strong>
+          <strong>{{ cita.inicio | date:'EEE d/MM HH:mm':'UTC' }}</strong>
           <span>{{ cita.odontologo?.nombre || 'Odontologo' }}</span>
           <small class="estado-pill">{{ cita.estado | titlecase }}</small>
         </div>
@@ -232,8 +232,8 @@
           </header>
 
           <p class="cita-card__fecha">
-            {{ cita.inicio | date: 'EEEE d \'de\' MMMM, HH:mm' }} -
-            {{ cita.fin | date: 'HH:mm' }}
+            {{ cita.inicio | date: 'EEEE d \'de\' MMMM, HH:mm':'UTC' }} -
+            {{ cita.fin | date: 'HH:mm':'UTC' }}
           </p>
 
           
@@ -305,8 +305,8 @@
           </header>
 
           <p class="cita-card__fecha">
-            {{ cita.inicio | date: 'EEEE d \'de\' MMMM, HH:mm' }} -
-            {{ cita.fin | date: 'HH:mm' }}
+            {{ cita.inicio | date: 'EEEE d \'de\' MMMM, HH:mm':'UTC' }} -
+            {{ cita.fin | date: 'HH:mm':'UTC' }}
           </p>
 
           

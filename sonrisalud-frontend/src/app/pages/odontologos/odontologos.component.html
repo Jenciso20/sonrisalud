@@ -93,7 +93,7 @@
                (dragstart)="onDragStart(e.cita)"
                (dragend)="onDragEnd()"
                [ngClass]="estadoClase(e.cita.estado)">
-            <span class="event__hora">{{ e.cita.inicio | date:'HH:mm' }}</span>
+            <span class="event__hora">{{ e.cita.inicio | date:'HH:mm':'UTC' }}</span>
             <strong class="event__titulo">{{ e.title }}</strong>
             <small class="estado-pill">{{ e.cita.estado }}</small>
             <small class="event__motivo" *ngIf="e.cita.motivo">“{{ e.cita.motivo }}”</small>
@@ -112,7 +112,7 @@
         <div>Acciones</div>
       </div>
       <div class="tabla__row" *ngFor="let c of citas">
-        <div>{{ c.inicio | date:'HH:mm' }} - {{ c.fin | date:'HH:mm' }}</div>
+        <div>{{ c.inicio | date:'HH:mm':'UTC' }} - {{ c.fin | date:'HH:mm':'UTC' }}</div>
         <div>{{ c.paciente?.nombre || ('#' + c.pacienteId) }}</div>
         <div>{{ c.estado }}</div>
         <div>
@@ -167,7 +167,7 @@
     <div class="acciones-rapidas__list">
       <article class="mini-card" *ngFor="let c of citasProximas | slice:0:5">
         <div class="mini-card__info">
-          <strong>{{ c.inicio | date:'EEE d/MM HH:mm' }}</strong>
+          <strong>{{ c.inicio | date:'EEE d/MM HH:mm':'UTC' }}</strong>
           <span>Paciente: {{ c.paciente?.nombre || ('#'+c.pacienteId) }}</span>
           <small class="estado-pill">{{ c.estado }}</small>
         </div>
